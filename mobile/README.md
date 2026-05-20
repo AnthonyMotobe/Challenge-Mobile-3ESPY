@@ -50,8 +50,6 @@ fontes e conflitos.
 | Fontes & conflitos | `src/screens/query/SourcesConflictsScreen.tsx` | Auditoria das fontes |
 | Histórico | `src/screens/history/HistoryListScreen.tsx` | Consultas anteriores (com cache offline) |
 | Detalhes do histórico | `src/navigation/HistoryStack.tsx` | Reabrir ficha + fontes |
-| Comparação — seleção | `src/screens/compare/CompareSelectionScreen.tsx` | Multi-seleção (2-4 consultas) |
-| Comparação — resultado | `src/screens/compare/CompareResultScreen.tsx` | Comparativo lado a lado com Truth Score por veículo |
 | Perfil | `src/screens/profile/ProfileScreen.tsx` | Sessão + permissões |
 
 ---
@@ -155,7 +153,6 @@ Depois aperte `r` no terminal do Metro pra recarregar.
 - ✅ **Refresh automático** de JWT via interceptor axios
 - ✅ **Cache de scans** dos últimos 50 anexos
 - ✅ **Atualização ao focar** nas telas Home e Histórico (`useFocusEffect`)
-- ✅ **Comparação lado a lado** de 2-4 veículos com vencedor por atributo, destaque de divergências e Truth Score por veículo
 
 ---
 
