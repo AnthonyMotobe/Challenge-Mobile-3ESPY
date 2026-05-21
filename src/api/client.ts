@@ -14,15 +14,20 @@ export function registerAuthFailureHandler(handler: () => void) {
 
 const REFRESH_PATH = '/auth/refresh';
 
+// Timeouts (ms). A query de veículo aciona o Claude no backend e pode ser
+// lenta — daí o timeout generoso no client principal.
+const REQUEST_TIMEOUT_MS = 45000;
+const REFRESH_TIMEOUT_MS = 30000;
+
 const rawClient: AxiosInstance = axios.create({
   baseURL,
-  timeout: 45000,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });
 
 const refreshClient: AxiosInstance = axios.create({
   baseURL,
-  timeout: 30000,
+  timeout: REFRESH_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 });
 

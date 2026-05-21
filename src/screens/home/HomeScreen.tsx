@@ -15,6 +15,7 @@ import { useQueryDraft } from '@/contexts/QueryDraftContext';
 import { vehiclesApi } from '@/api/vehicles';
 import { historyCache } from '@/storage/historyCache';
 import { Button } from '@/components/Button';
+import { formatDateTime, statusPalette, translateStatus } from '@/utils/format';
 import { colors, radius, spacing, typography } from '@/theme/colors';
 import type { AppTabsParamList } from '@/navigation/types';
 import type { QuerySummary } from '@/types/api';
@@ -78,8 +79,8 @@ export function HomeScreen() {
           <View style={styles.heroCard}>
             <Text style={styles.heroTitle}>Scan-to-Spec</Text>
             <Text style={styles.heroSubtitle}>
-              Marca + modelo + versão (ou imagem) → ficha técnica padronizada com Truth
-              Score por atributo.
+              Marca + modelo + versão (ou imagem) → ficha técnica padronizada com
+              valor e fonte de cada atributo.
             </Text>
             <Button title="Nova consulta" onPress={startNewQuery} variant="secondary" />
           </View>
@@ -101,8 +102,8 @@ export function HomeScreen() {
             />
             <StepCard
               index={4}
-              title="Ficha + Truth Score"
-              description="Receba a ficha padronizada com nível de confiança"
+              title="Ficha técnica"
+              description="Receba a ficha com o valor e a fonte de cada item"
             />
           </View>
         </View>
@@ -128,9 +129,14 @@ export function HomeScreen() {
                   {item.brand} {item.model}
                 </Text>
                 <Text style={styles.recentMeta}>
-                  {item.version} · {formatDate(item.created_at)}
+                  {item.version} · {formatDateTime(item.created_at)}
                 </Text>
-                <Text style={[styles.recentStatus, statusColor(item.status)]}>
+                <Text
+                  style={[
+                    styles.recentStatus,
+                    { color: statusPalette(item.status).fg },
+                  ]}
+                >
                   {translateStatus(item.status)}
                 </Text>
               </View>
@@ -162,45 +168,6 @@ function StepCard({
       </View>
     </View>
   );
-}
-
-function translateStatus(status: string) {
-  switch (status) {
-    case 'completed':
-      return 'Concluída';
-    case 'failed':
-      return 'Falhou';
-    case 'pending':
-      return 'Em processamento';
-    default:
-      return status;
-  }
-}
-
-function statusColor(status: string) {
-  switch (status) {
-    case 'completed':
-      return { color: colors.success };
-    case 'failed':
-      return { color: colors.danger };
-    case 'pending':
-      return { color: colors.warning };
-    default:
-      return { color: colors.textSecondary };
-  }
-}
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
 }
 
 const styles = StyleSheet.create({

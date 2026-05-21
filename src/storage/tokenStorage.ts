@@ -20,17 +20,27 @@ const storage = {
   },
 };
 
+// Cache em memória do access token: evita uma leitura de disco (SecureStore)
+// a cada request HTTP. `undefined` = ainda não hidratado a partir do disco.
+let accessTokenCache: string | null | undefined;
+
 export const tokenStorage = {
   async saveTokens(access: string, refresh: string): Promise<void> {
+    accessTokenCache = access;
     await Promise.all([storage.set(ACCESS_KEY, access), storage.set(REFRESH_KEY, refresh)]);
   },
   async getAccessToken(): Promise<string | null> {
-    return storage.get(ACCESS_KEY);
+    if (accessTokenCache === undefined) {
+      accessTokenCache = await storage.get(ACCESS_KEY);
+    }
+    return accessTokenCache;
   },
   async getRefreshToken(): Promise<string | null> {
+    // Chamado raramente (só no refresh) — leitura direta do disco é aceitável.
     return storage.get(REFRESH_KEY);
   },
   async clear(): Promise<void> {
+    accessTokenCache = null;
     await Promise.all([storage.remove(ACCESS_KEY), storage.remove(REFRESH_KEY)]);
   },
 };

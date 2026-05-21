@@ -30,6 +30,14 @@ const STEPS = [
   { key: 'sheet', label: 'Montando a ficha técnica' },
 ];
 
+// Tempos da animação de progresso (ms). A barra é uma estimativa visual:
+// para em PROGRESS_TARGET e só completa quando a resposta real chega.
+const STEP_INTERVAL_MS = 900;
+const PROGRESS_TARGET = 0.9;
+const PROGRESS_FILL_MS = 4000;
+const PROGRESS_COMPLETE_MS = 300;
+const NAVIGATE_DELAY_MS = 400;
+
 export function ProcessingScreen({ navigation }: Props) {
   const { draft, reset } = useQueryDraft();
   const [activeStep, setActiveStep] = useState(0);
@@ -44,10 +52,10 @@ export function ProcessingScreen({ navigation }: Props) {
     let cancelled = false;
     const stepTimer = setInterval(() => {
       setActiveStep((s) => (s < STEPS.length - 1 ? s + 1 : s));
-    }, 900);
+    }, STEP_INTERVAL_MS);
     Animated.timing(progress, {
-      toValue: 0.9,
-      duration: 4000,
+      toValue: PROGRESS_TARGET,
+      duration: PROGRESS_FILL_MS,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
@@ -76,7 +84,7 @@ export function ProcessingScreen({ navigation }: Props) {
         ]);
         Animated.timing(progress, {
           toValue: 1,
-          duration: 300,
+          duration: PROGRESS_COMPLETE_MS,
           useNativeDriver: false,
         }).start();
         const found = response.specs.filter((s) => s.available && s.value).length;
@@ -91,7 +99,7 @@ export function ProcessingScreen({ navigation }: Props) {
           if (cancelled) return;
           navigation.replace('SpecSheet', { query: response });
           reset();
-        }, 400);
+        }, NAVIGATE_DELAY_MS);
       } catch (err) {
         if (cancelled) return;
         setError(normalizeError(err).message);

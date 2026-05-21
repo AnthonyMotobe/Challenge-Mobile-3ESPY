@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '@/theme/colors';
+import { titleCase } from '@/utils/format';
 import type { SpecOut } from '@/types/api';
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 export function SpecCard({ spec }: Props) {
   return (
     <View style={styles.card}>
-      <Text style={styles.attribute}>{formatAttribute(spec.attribute)}</Text>
+      <Text style={styles.attribute}>{titleCase(spec.attribute)}</Text>
       <Text style={styles.value}>
         {spec.value ?? '—'}
         {spec.normalized_unit ? (
@@ -25,13 +26,6 @@ export function SpecCard({ spec }: Props) {
       </View>
     </View>
   );
-}
-
-function formatAttribute(raw: string): string {
-  return raw
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 const styles = StyleSheet.create({

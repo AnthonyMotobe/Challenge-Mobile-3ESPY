@@ -6,6 +6,12 @@ marca/modelo/versão (e opcionalmente envia uma imagem ou PDF), e recebe uma
 ficha técnica padronizada — cada atributo aparece com o **valor** e a **fonte**
 de onde a informação foi extraída.
 
+> **Escopo deste repositório:** contém **apenas o aplicativo mobile**
+> (React Native + Expo). A API REST é um projeto **separado**, mantido em seu
+> próprio repositório e com ciclo de deploy independente. O app apenas
+> **consome** essa API — os endpoints esperados estão na seção 9. Para rodar
+> sem nenhum backend, use o **modo Demo** (seção 5).
+
 ## Equipe
 
 | Nome | RM |

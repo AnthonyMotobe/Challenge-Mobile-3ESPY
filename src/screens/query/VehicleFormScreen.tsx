@@ -51,7 +51,7 @@ export function VehicleFormScreen({ navigation }: Props) {
         <Text style={styles.stepLabel}>Passo 1 de 4</Text>
         <Text style={styles.title}>Sobre o veículo</Text>
         <Text style={styles.subtitle}>
-          Quanto mais específica a versão, mais preciso o Truth Score.
+          Quanto mais específica a versão, mais precisa fica a ficha técnica.
         </Text>
       </View>
 

@@ -45,7 +45,8 @@ export function LoginScreen({ navigation }: Props) {
           </View>
           <Text style={styles.title}>Bem-vindo de volta</Text>
           <Text style={styles.subtitle}>
-            Extraia fichas técnicas em segundos com Truth Score por atributo.
+            Extraia fichas técnicas padronizadas em segundos, com a fonte de
+            cada informação.
           </Text>
         </View>
         <View style={styles.form}>

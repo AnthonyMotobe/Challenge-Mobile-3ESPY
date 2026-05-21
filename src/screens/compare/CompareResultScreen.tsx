@@ -18,6 +18,7 @@ import {
   relativeBarValues,
   winnerStrategyFor,
 } from '@/utils/compareHelpers';
+import { titleCase } from '@/utils/format';
 import { colors, radius, spacing, typography } from '@/theme/colors';
 import type { CompareStackParamList } from '@/navigation/types';
 import type { QueryResponse, SpecOut } from '@/types/api';
@@ -84,11 +85,15 @@ export function CompareResultScreen({ route }: Props) {
         const available = matches.find((m) => m.available);
         return available ?? matches[0];
       });
+      // Barras de comparação só fazem sentido em atributos com critério de
+      // vitória (potência, preço, 0-100…). Atributo de texto (motor, pneus)
+      // não recebe barra — senão o app sugere uma comparação visual sem sentido.
+      const comparable = winnerStrategyFor(attr) !== 'none';
       return {
         attribute: attr,
         cells,
         winnerIdx: findWinnerIndex(cells, attr),
-        bars: relativeBarValues(cells),
+        bars: comparable ? relativeBarValues(cells) : cells.map(() => null),
       };
     });
   }, [queries]);
@@ -338,7 +343,7 @@ function AttributeCard({
     <View style={[styles.card, winnerModel ? styles.cardHasWinner : null]}>
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{formatAttr(row.attribute)}</Text>
+          <Text style={styles.cardTitle}>{titleCase(row.attribute)}</Text>
           {strategyLabel ? (
             <Text style={styles.cardStrategy}>{strategyLabel}</Text>
           ) : null}
@@ -430,13 +435,6 @@ function AttributeCard({
       </View>
     </View>
   );
-}
-
-function formatAttr(raw: string): string {
-  return raw
-    .split(' ')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
 }
 
 const styles = StyleSheet.create({

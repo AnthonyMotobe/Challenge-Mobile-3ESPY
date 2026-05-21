@@ -13,6 +13,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { vehiclesApi } from '@/api/vehicles';
 import { historyCache } from '@/storage/historyCache';
+import { normalizeError } from '@/api/client';
+import { formatDateTime, statusPalette, translateStatus } from '@/utils/format';
 import { colors, radius, spacing, typography } from '@/theme/colors';
 import type { HistoryStackParamList } from '@/navigation/types';
 import type { QuerySummary } from '@/types/api';
@@ -40,7 +42,7 @@ export function HistoryListScreen() {
       if (cached.length) {
         setOffline(true);
       } else {
-        setError((err as Error).message);
+        setError(normalizeError(err).message);
       }
     } finally {
       setLoading(false);
@@ -105,10 +107,18 @@ export function HistoryListScreen() {
                 {item.brand} {item.model}
               </Text>
               <Text style={styles.rowMeta}>
-                {item.version} · {formatDate(item.created_at)}
+                {item.version} · {formatDateTime(item.created_at)}
               </Text>
             </View>
-            <Text style={[styles.status, statusColor(item.status)]}>
+            <Text
+              style={[
+                styles.status,
+                {
+                  color: statusPalette(item.status).fg,
+                  backgroundColor: statusPalette(item.status).bg,
+                },
+              ]}
+            >
               {translateStatus(item.status)}
             </Text>
           </Pressable>
@@ -116,46 +126,6 @@ export function HistoryListScreen() {
       />
     </SafeAreaView>
   );
-}
-
-function translateStatus(status: string) {
-  switch (status) {
-    case 'completed':
-      return 'Concluída';
-    case 'failed':
-      return 'Falhou';
-    case 'pending':
-      return 'Pendente';
-    default:
-      return status;
-  }
-}
-
-function statusColor(status: string) {
-  switch (status) {
-    case 'completed':
-      return { color: colors.success, backgroundColor: '#DCFCE7' };
-    case 'failed':
-      return { color: colors.danger, backgroundColor: '#FEE2E2' };
-    case 'pending':
-      return { color: colors.warning, backgroundColor: '#FEF3C7' };
-    default:
-      return { color: colors.textSecondary, backgroundColor: colors.surfaceAlt };
-  }
-}
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return iso;
-  }
 }
 
 const styles = StyleSheet.create({
