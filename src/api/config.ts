@@ -13,7 +13,7 @@ import Constants from 'expo-constants';
  */
 
 /** Porta HTTP do gateway usada na detecção automática (modo "auto"). */
-const API_PORT = 8080;
+const API_PORT = 8443;
 
 /**
  * Modo demo. Padrão seguro = `true`: sem `.env`, o app roda com dados locais
