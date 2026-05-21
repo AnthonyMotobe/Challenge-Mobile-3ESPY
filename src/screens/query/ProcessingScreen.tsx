@@ -139,7 +139,7 @@ export function ProcessingScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.stepLabel}>Passo 4 de 4</Text>
+        <Text style={styles.stepLabel}>Passo 3 de 3</Text>
         <Text style={styles.title}>Extraindo ficha técnica</Text>
         <Text style={styles.subtitle}>
           {draft.brand} {draft.model} · {draft.version}

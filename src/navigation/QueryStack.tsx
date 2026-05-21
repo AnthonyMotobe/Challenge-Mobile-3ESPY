@@ -2,7 +2,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { VehicleFormScreen } from '@/screens/query/VehicleFormScreen';
 import { AttributeSelectorScreen } from '@/screens/query/AttributeSelectorScreen';
-import { ScanToSpecScreen } from '@/screens/query/ScanToSpecScreen';
 import { ProcessingScreen } from '@/screens/query/ProcessingScreen';
 import { SpecSheetScreen } from '@/screens/query/SpecSheetScreen';
 import { colors } from '@/theme/colors';
@@ -29,11 +28,6 @@ export function QueryStack() {
         name="AttributeSelector"
         component={AttributeSelectorScreen}
         options={{ title: 'Atributos' }}
-      />
-      <Stack.Screen
-        name="ScanToSpec"
-        component={ScanToSpecScreen}
-        options={{ title: 'Scan-to-Spec' }}
       />
       <Stack.Screen
         name="Processing"

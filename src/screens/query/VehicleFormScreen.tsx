@@ -48,7 +48,7 @@ export function VehicleFormScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.stepLabel}>Passo 1 de 4</Text>
+        <Text style={styles.stepLabel}>Passo 1 de 3</Text>
         <Text style={styles.title}>Sobre o veículo</Text>
         <Text style={styles.subtitle}>
           Quanto mais específica a versão, mais precisa fica a ficha técnica.

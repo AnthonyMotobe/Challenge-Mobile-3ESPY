@@ -97,11 +97,6 @@ export function HomeScreen() {
             />
             <StepCard
               index={3}
-              title="Anexos (opcional)"
-              description="Mande foto, print ou PDF do manual"
-            />
-            <StepCard
-              index={4}
               title="Ficha técnica"
               description="Receba a ficha com o valor e a fonte de cada item"
             />

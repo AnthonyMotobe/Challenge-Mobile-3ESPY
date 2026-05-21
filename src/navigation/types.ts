@@ -8,7 +8,6 @@ export type AuthStackParamList = {
 export type QueryStackParamList = {
   VehicleForm: undefined;
   AttributeSelector: undefined;
-  ScanToSpec: undefined;
   Processing: undefined;
   SpecSheet: { query: QueryResponse } | { queryId: string };
 };

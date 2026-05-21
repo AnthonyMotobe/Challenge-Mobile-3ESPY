@@ -83,13 +83,13 @@ export function AttributeSelectorScreen({ navigation }: Props) {
       return;
     }
     setAttributes(selected);
-    navigation.navigate('ScanToSpec');
+    navigation.navigate('Processing');
   }
 
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.stepLabel}>Passo 2 de 4</Text>
+        <Text style={styles.stepLabel}>Passo 2 de 3</Text>
         <Text style={styles.title}>O que extrair?</Text>
         <Text style={styles.subtitle}>
           Selecione os atributos da ficha técnica. Mínimo 1, máximo 30.
