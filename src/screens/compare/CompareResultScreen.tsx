@@ -15,7 +15,6 @@ import {
   ATTRIBUTE_CATEGORIES,
   VEHICLE_PALETTE,
   findWinnerIndex,
-  relativeBarValues,
   winnerStrategyFor,
 } from '@/utils/compareHelpers';
 import { titleCase } from '@/utils/format';
@@ -29,7 +28,6 @@ interface ComparisonRow {
   attribute: string;
   cells: (SpecOut | null)[];
   winnerIdx: number | null;
-  bars: (number | null)[];
 }
 
 interface Section {
@@ -85,15 +83,10 @@ export function CompareResultScreen({ route }: Props) {
         const available = matches.find((m) => m.available);
         return available ?? matches[0];
       });
-      // Barras de comparação só fazem sentido em atributos com critério de
-      // vitória (potência, preço, 0-100…). Atributo de texto (motor, pneus)
-      // não recebe barra — senão o app sugere uma comparação visual sem sentido.
-      const comparable = winnerStrategyFor(attr) !== 'none';
       return {
         attribute: attr,
         cells,
         winnerIdx: findWinnerIndex(cells, attr),
-        bars: comparable ? relativeBarValues(cells) : cells.map(() => null),
       };
     });
   }, [queries]);
@@ -328,7 +321,6 @@ function AttributeCard({
   row: ComparisonRow;
   queries: QueryResponse[];
 }) {
-  const hasNumericComparison = row.bars.some((b) => b !== null);
   const strategy = winnerStrategyFor(row.attribute);
   const strategyLabel =
     strategy === 'higher'
@@ -365,7 +357,6 @@ function AttributeCard({
         {row.cells.map((cell, idx) => {
           const palette = VEHICLE_PALETTE[idx];
           const isWinner = row.winnerIdx === idx;
-          const bar = row.bars[idx];
 
           return (
             <View
@@ -404,21 +395,6 @@ function AttributeCard({
                       <Text style={styles.unitText}>{cell.normalized_unit}</Text>
                     ) : null}
                   </View>
-
-                  {hasNumericComparison && bar !== null ? (
-                    <View style={styles.barTrack}>
-                      <View
-                        style={[
-                          styles.barFill,
-                          {
-                            width: `${Math.max(8, bar * 100)}%`,
-                            backgroundColor: palette.primary,
-                            opacity: isWinner ? 1 : 0.55,
-                          },
-                        ]}
-                      />
-                    </View>
-                  ) : null}
 
                   <Text style={styles.sourceText} numberOfLines={2}>
                     Fonte: {cell.source_hint ?? 'não informada'}
@@ -632,14 +608,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   unitText: { fontSize: 11, color: colors.textMuted, fontWeight: '600' },
-  barTrack: {
-    height: 6,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 6,
-  },
-  barFill: { height: 6, borderRadius: 3 },
   sourceText: { fontSize: 11, color: colors.textMuted, fontStyle: 'italic' },
 
   missingLine: { paddingVertical: 4 },
