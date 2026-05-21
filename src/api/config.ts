@@ -1,32 +1,42 @@
 import Constants from 'expo-constants';
 
-export const isMockMode: boolean =
-  Constants.expoConfig?.extra?.mockMode === true;
+/**
+ * Configuração de ambiente do app — lida do arquivo `.env` na raiz do projeto.
+ *
+ * O Expo injeta automaticamente toda variável prefixada com `EXPO_PUBLIC_`
+ * em `process.env` (embutida no bundle no momento do build). Por isso, ao
+ * editar o `.env`, é preciso reiniciar o Metro com `npx expo start --clear`.
+ *
+ * Variáveis usadas (ver `.env.example`):
+ *  - EXPO_PUBLIC_API_URL    URL da API ou "auto"
+ *  - EXPO_PUBLIC_MOCK_MODE  "true" (demo, dados locais) ou "false" (API real)
+ */
 
-/** Porta HTTP do gateway da API (nginx dev). */
+/** Porta HTTP padrão do gateway da API (usada na detecção automática). */
 const API_PORT = 8080;
+
+/**
+ * Modo demo. Padrão seguro = `true`: sem `.env`, o app roda com dados locais
+ * e não tenta bater em backend nenhum.
+ */
+export const isMockMode: boolean =
+  (process.env.EXPO_PUBLIC_MOCK_MODE ?? 'true').trim().toLowerCase() !== 'false';
 
 /**
  * Resolve a URL base da API.
  *
- * Ordem de prioridade:
- * 1. Se `app.json → extra.apiBaseUrl` tiver um valor explícito (≠ "auto"), usa ele.
- * 2. Senão, DEDUZ o IP automaticamente: pega o IP do servidor Metro (a forma como
- *    o Expo Go se conectou ao seu notebook) e usa esse mesmo IP na porta 8080.
+ * 1. Se `EXPO_PUBLIC_API_URL` tiver um valor explícito (≠ "auto"), usa ele.
+ * 2. Senão, DEDUZ o IP automaticamente: usa o mesmo IP pelo qual o Expo Go
+ *    se conectou ao Metro, na porta 8080. Assim, ao trocar de Wi-Fi, não é
+ *    preciso editar nada — basta o celular estar na mesma rede do host.
  *
- * Resultado: ao trocar de Wi-Fi, NÃO precisa editar IP nenhum. Basta o celular
- * estar na mesma rede do notebook — o app descobre o endereço sozinho.
- *
- * Observação: isso funciona em modo LAN (`npx expo start`). Em modo tunnel
- * (`--tunnel`) o Metro fica num host *.exp.direct e o IP local não é exposto;
- * nesse caso defina `extra.apiBaseUrl` manualmente.
+ * Em modo tunnel (`--tunnel`) a detecção não funciona (o Metro fica num host
+ * *.exp.direct); nesse caso, fixe `EXPO_PUBLIC_API_URL` no `.env`.
  */
 export function resolveApiBaseUrl(): string {
-  const configured = Constants.expoConfig?.extra?.apiBaseUrl as
-    | string
-    | undefined;
-  if (configured && configured.trim() && configured.trim() !== 'auto') {
-    return configured.trim();
+  const configured = (process.env.EXPO_PUBLIC_API_URL ?? '').trim();
+  if (configured && configured.toLowerCase() !== 'auto') {
+    return configured;
   }
 
   // hostUri ex.: "172.16.72.115:8081" (LAN) ou "abc-anonymous-8081.exp.direct" (tunnel)

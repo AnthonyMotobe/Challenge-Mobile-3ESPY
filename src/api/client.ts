@@ -94,7 +94,7 @@ export function normalizeError(error: unknown): ApiError {
     if (error.message === 'Network Error') {
       return {
         message:
-          'Não conseguimos falar com a API. Verifique se o backend está rodando e o endereço configurado em app.json (extra.apiBaseUrl).',
+          'Não conseguimos falar com a API. Verifique se o backend está rodando e o endereço definido no arquivo .env (EXPO_PUBLIC_API_URL).',
       };
     }
     return { message: error.message };

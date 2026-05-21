@@ -52,13 +52,6 @@
           "color": "#0A1F44"
         }
       ]
-    ],
-    "extra": {
-      "apiBaseUrl": "auto",
-      "mockMode": true,
-      "router": {
-        "origin": false
-      }
-    }
+    ]
   }
 }

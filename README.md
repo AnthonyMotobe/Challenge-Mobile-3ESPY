@@ -85,6 +85,7 @@ Cada card de atributo apresenta:
 ```bash
 cd ford-mobile-app
 npm install
+cp .env.example .env   # cria a config local (veja seção 5)
 npm start
 ```
 
@@ -102,39 +103,41 @@ npx expo start --tunnel
 
 ---
 
-## 5. Modo Demo vs Backend Real
+## 5. Configuração — arquivo `.env`
 
-O app tem dois modos, controlados por `app.json → expo.extra.mockMode`:
+Toda a configuração de ambiente fica no arquivo **`.env`** na raiz do projeto.
+Esse arquivo **não vai pro git** (cada pessoa/máquina tem o seu) — o que é
+versionado é o template **`.env.example`**. Para criar o seu:
 
-| Modo | `mockMode` | Origem dos dados | Quando usar |
-|---|---|---|---|
-| **Demo** | `true` | Fixtures locais com 4 Fords (Ranger Raptor, Mach-E, Maverick, Bronco) | Avaliação offline; demos sem rede; quando o backend não está disponível |
-| **Real** | `false` | API REST externa (a do projeto Ford) | Quando há um backend real rodando |
-
-No modo Demo aparece um **badge "MODO DEMO"** amarelo no canto superior direito.
-Qualquer e-mail/senha entra. O fluxo completo funciona — incluindo ficha técnica,
-histórico, scan-to-spec, comparação e notificações.
-
-**Pra usar com backend real**: edite `app.json` e troque `mockMode` para `false`:
-
-```json
-"extra": {
-  "apiBaseUrl": "auto",
-  "mockMode": false
-}
+```bash
+cp .env.example .env
 ```
 
-### Detecção automática de IP (`apiBaseUrl: "auto"`)
+| Variável | Valores | O que faz |
+|---|---|---|
+| `EXPO_PUBLIC_MOCK_MODE` | `true` / `false` | `true` = modo Demo (dados locais, sem backend); `false` = consome a API real |
+| `EXPO_PUBLIC_API_URL` | `auto` ou `http://host:8080` | Endereço da API. `auto` detecta o IP do host sozinho |
 
-Com `apiBaseUrl` em `"auto"`, o app **descobre sozinho** o endereço do backend:
-ele usa o mesmo IP pelo qual o Expo Go se conectou ao Metro, na porta `8080`.
-Resultado: ao trocar de Wi-Fi, **não é preciso editar IP** — basta o celular
-estar na mesma rede do notebook (modo LAN, `npx expo start`).
+> Após editar o `.env`, reinicie o Metro com **`npx expo start --clear`** —
+> as variáveis `EXPO_PUBLIC_*` são embutidas no bundle no momento do build.
 
-Se preferir fixar manualmente, troque `"auto"` por `"http://<host>:8080"`.
-Em modo tunnel (`--tunnel`), a detecção não funciona — defina o host à mão.
+### Modo Demo (`EXPO_PUBLIC_MOCK_MODE=true`)
 
-Depois aperte `r` no terminal do Metro pra recarregar.
+Usa fixtures locais com 4 Fords (Ranger Raptor, Mach-E, Maverick, Bronco).
+Aparece um **badge "MODO DEMO"** amarelo no topo. Qualquer e-mail/senha entra.
+O fluxo completo funciona offline — ficha técnica, histórico, scan-to-spec,
+comparação e notificações. Ideal para avaliar o app **sem depender da API**.
+
+### Modo Real (`EXPO_PUBLIC_MOCK_MODE=false`)
+
+O app consome a **API REST** (projeto separado, em outro repositório).
+Defina `EXPO_PUBLIC_API_URL`:
+
+- **`auto`** — o app descobre o endereço sozinho: usa o mesmo IP pelo qual o
+  Expo Go se conectou ao Metro, na porta `8080`. Ao trocar de Wi-Fi, **não é
+  preciso editar nada** — basta o celular estar na mesma rede do host (modo LAN).
+- **`http://<host>:8080`** — fixa o endereço manualmente. Use em modo tunnel
+  (`--tunnel`), onde a detecção automática não funciona.
 
 ---
 
