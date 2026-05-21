@@ -1,4 +1,4 @@
-# Ford Scan-to-Spec — App Mobile
+ Ford Scan-to-Spec — App Mobile
 
 App mobile da disciplina **Mobile Development & IoT** (FIAP — 3ESPY) para o
 desafio Ford. O fluxo principal: o usuário informa **marca / modelo / versão**,
