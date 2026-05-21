@@ -11,13 +11,11 @@ export type QueryStackParamList = {
   ScanToSpec: undefined;
   Processing: undefined;
   SpecSheet: { query: QueryResponse } | { queryId: string };
-  SourcesConflicts: { query: QueryResponse };
 };
 
 export type HistoryStackParamList = {
   HistoryList: undefined;
   HistoryDetail: { queryId: string };
-  HistorySources: { query: QueryResponse };
 };
 
 export type CompareStackParamList = {

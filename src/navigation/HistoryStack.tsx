@@ -3,7 +3,6 @@ import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HistoryListScreen } from '@/screens/history/HistoryListScreen';
-import { SourcesConflictsScreen } from '@/screens/query/SourcesConflictsScreen';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { SpecSheetView } from '@/components/SpecSheetView';
 import { vehiclesApi } from '@/api/vehicles';
@@ -59,10 +58,7 @@ function HistoryDetailScreen({
 
   return (
     <ScreenContainer>
-      <SpecSheetView
-        query={query}
-        onOpenSources={() => navigation.navigate('HistorySources', { query })}
-      />
+      <SpecSheetView query={query} />
     </ScreenContainer>
   );
 }
@@ -86,11 +82,6 @@ export function HistoryStack() {
         name="HistoryDetail"
         component={HistoryDetailScreen}
         options={{ title: 'Detalhes' }}
-      />
-      <Stack.Screen
-        name="HistorySources"
-        component={SourcesConflictsScreen as never}
-        options={{ title: 'Fontes & conflitos' }}
       />
     </Stack.Navigator>
   );

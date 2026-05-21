@@ -1,11 +1,9 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import Constants from 'expo-constants';
+import { apiBaseUrl as resolvedBaseUrl } from '@/api/config';
 import { tokenStorage } from '@/storage/tokenStorage';
 import type { ApiError, TokenPair } from '@/types/api';
 
-const fallbackBaseUrl = 'https://10.0.2.2:8443';
-const baseURL: string =
-  (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ?? fallbackBaseUrl;
+const baseURL: string = resolvedBaseUrl;
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 

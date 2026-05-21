@@ -1,40 +1,26 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SpecCard } from '@/components/SpecCard';
-import { TruthScoreBadge } from '@/components/TruthScoreBadge';
-import { ConfidenceBar } from '@/components/ConfidenceBar';
 import { Button } from '@/components/Button';
-import { aggregateTruthScore, computeTruthScore } from '@/utils/truthScore';
 import { colors, radius, spacing, typography } from '@/theme/colors';
 import type { QueryResponse } from '@/types/api';
 
 interface Props {
   query: QueryResponse;
-  onOpenSources: () => void;
   onSecondaryAction?: () => void;
   secondaryActionLabel?: string;
 }
 
 export function SpecSheetView({
   query,
-  onOpenSources,
   onSecondaryAction,
   secondaryActionLabel,
 }: Props) {
-  const aggregate = useMemo(() => aggregateTruthScore(query.specs), [query.specs]);
-  const counts = useMemo(() => {
-    return query.specs.reduce(
-      (acc, spec) => {
-        const score = computeTruthScore(spec);
-        if (score.level === 'high') acc.high += 1;
-        else if (score.level === 'medium') acc.med += 1;
-        else if (score.level === 'low') acc.low += 1;
-        else acc.missing += 1;
-        return acc;
-      },
-      { high: 0, med: 0, low: 0, missing: 0 },
-    );
-  }, [query.specs]);
+  // Só aparecem atributos com dado real (valor disponível).
+  const specs = useMemo(
+    () => query.specs.filter((s) => s.available && s.value),
+    [query.specs],
+  );
 
   return (
     <>
@@ -44,41 +30,34 @@ export function SpecSheetView({
           {query.brand} {query.model}
         </Text>
         <Text style={styles.version}>{query.version}</Text>
-        <View style={styles.badgeRow}>
-          <TruthScoreBadge score={aggregate} size="lg" />
+        <View style={styles.countPill}>
+          <Text style={styles.countText}>
+            {specs.length} atributo(s) encontrado(s)
+          </Text>
         </View>
-        <View style={styles.aggregateBar}>
-          <ConfidenceBar value={aggregate.value} color={aggregate.color} height={10} />
-        </View>
-        <View style={styles.statsRow}>
-          <Stat label="Alta" value={counts.high} color={colors.truthHigh} />
-          <Stat label="Média" value={counts.med} color={colors.truthMed} />
-          <Stat label="Baixa" value={counts.low} color={colors.truthLow} />
-          <Stat label="Faltando" value={counts.missing} color={colors.truthMissing} />
-        </View>
-        <Pressable style={styles.linkButton} onPress={onOpenSources}>
-          <Text style={styles.linkButtonText}>Ver fontes e conflitos →</Text>
-        </Pressable>
       </View>
 
-      <Text style={styles.sectionTitle}>Atributos ({query.specs.length})</Text>
-      {query.specs.map((spec, idx) => (
-        <SpecCard key={`${spec.attribute}-${idx}`} spec={spec} />
-      ))}
+      {specs.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>Nenhum dado encontrado</Text>
+          <Text style={styles.emptyDesc}>
+            As fontes consultadas não retornaram informações para os atributos
+            solicitados.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Text style={styles.sectionTitle}>Atributos</Text>
+          {specs.map((spec, idx) => (
+            <SpecCard key={`${spec.attribute}-${idx}`} spec={spec} />
+          ))}
+        </>
+      )}
 
       {onSecondaryAction && secondaryActionLabel ? (
         <Button title={secondaryActionLabel} variant="secondary" onPress={onSecondaryAction} />
       ) : null}
     </>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
   );
 }
 
@@ -98,18 +77,23 @@ const styles = StyleSheet.create({
   },
   title: { color: '#FFF', fontSize: 24, fontWeight: '800' },
   version: { color: '#CBDAF2', fontSize: 15, marginBottom: spacing.md },
-  badgeRow: { marginBottom: spacing.sm },
-  aggregateBar: { marginBottom: spacing.md },
-  statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  stat: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: 20, fontWeight: '800' },
-  statLabel: { color: '#CBDAF2', fontSize: 11, fontWeight: '600' },
-  linkButton: {
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: '#1B3A7A',
+  countPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.fordBlueDark,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
   },
-  linkButtonText: { color: '#FFF', fontWeight: '700' },
+  countText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
   sectionTitle: { ...typography.h3, marginBottom: spacing.sm },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  emptyDesc: { ...typography.caption },
 });

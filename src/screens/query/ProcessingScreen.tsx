@@ -18,7 +18,6 @@ import {
   ensureNotificationPermission,
   notifyExtractionComplete,
 } from '@/notifications/localNotifications';
-import { aggregateTruthScore } from '@/utils/truthScore';
 import { colors, radius, spacing, typography } from '@/theme/colors';
 import type { QueryStackParamList } from '@/navigation/types';
 
@@ -28,7 +27,7 @@ const STEPS = [
   { key: 'request', label: 'Enviando consulta ao backend' },
   { key: 'sources', label: 'Cruzando fontes (sites, manuais, reviews)' },
   { key: 'normalize', label: 'Normalizando unidades e valores' },
-  { key: 'score', label: 'Calculando Truth Score por atributo' },
+  { key: 'sheet', label: 'Montando a ficha técnica' },
 ];
 
 export function ProcessingScreen({ navigation }: Props) {
@@ -80,12 +79,12 @@ export function ProcessingScreen({ navigation }: Props) {
           duration: 300,
           useNativeDriver: false,
         }).start();
-        const score = aggregateTruthScore(response.specs);
+        const found = response.specs.filter((s) => s.available && s.value).length;
         notifyExtractionComplete({
           brand: response.brand,
           model: response.model,
           version: response.version,
-          truthScorePercent: Math.round(score.value * 100),
+          attributesFound: found,
         }).catch(() => undefined);
         setActiveStep(STEPS.length - 1);
         setTimeout(() => {

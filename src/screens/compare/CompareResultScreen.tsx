@@ -11,14 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { vehiclesApi } from '@/api/vehicles';
 import { historyCache } from '@/storage/historyCache';
-import { aggregateTruthScore, computeTruthScore } from '@/utils/truthScore';
 import {
   ATTRIBUTE_CATEGORIES,
   VEHICLE_PALETTE,
   findWinnerIndex,
   relativeBarValues,
-  valuesDiverge,
-  valuesMatch,
   winnerStrategyFor,
 } from '@/utils/compareHelpers';
 import { colors, radius, spacing, typography } from '@/theme/colors';
@@ -30,8 +27,6 @@ type Props = NativeStackScreenProps<CompareStackParamList, 'CompareResult'>;
 interface ComparisonRow {
   attribute: string;
   cells: (SpecOut | null)[];
-  diverges: boolean;
-  matches: boolean;
   winnerIdx: number | null;
   bars: (number | null)[];
 }
@@ -40,6 +35,12 @@ interface Section {
   title: string;
   emoji: string;
   rows: ComparisonRow[];
+}
+
+interface Standing {
+  query: QueryResponse;
+  idx: number;
+  wins: number;
 }
 
 export function CompareResultScreen({ route }: Props) {
@@ -86,8 +87,6 @@ export function CompareResultScreen({ route }: Props) {
       return {
         attribute: attr,
         cells,
-        diverges: valuesDiverge(cells),
-        matches: valuesMatch(cells),
         winnerIdx: findWinnerIndex(cells, attr),
         bars: relativeBarValues(cells),
       };
@@ -113,12 +112,25 @@ export function CompareResultScreen({ route }: Props) {
     return grouped;
   }, [rows]);
 
-  const stats = useMemo(() => {
-    const conflicts = rows.filter((r) => r.diverges).length;
-    const matches = rows.filter((r) => r.matches).length;
-    const total = rows.length;
-    return { conflicts, matches, total };
-  }, [rows]);
+  // Placar: cada atributo numérico com vencedor vale 1 ponto pro veículo.
+  const standings = useMemo<Standing[]>(() => {
+    const wins = queries.map(() => 0);
+    for (const row of rows) {
+      if (row.winnerIdx !== null) wins[row.winnerIdx] += 1;
+    }
+    return queries
+      .map((query, idx) => ({ query, idx, wins: wins[idx] }))
+      .sort((a, b) => b.wins - a.wins);
+  }, [rows, queries]);
+
+  const decidedCount = useMemo(
+    () => rows.filter((r) => r.winnerIdx !== null).length,
+    [rows],
+  );
+
+  const topWins = standings[0]?.wins ?? 0;
+  const leaders = standings.filter((s) => s.wins === topWins && topWins > 0);
+  const champion = leaders.length === 1 ? leaders[0] : null;
 
   function toggleSection(title: string) {
     setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }));
@@ -160,7 +172,6 @@ export function CompareResultScreen({ route }: Props) {
             contentContainerStyle={styles.pillsContent}
           >
             {queries.map((q, idx) => {
-              const score = aggregateTruthScore(q.specs);
               const palette = VEHICLE_PALETTE[idx];
               return (
                 <View
@@ -173,10 +184,7 @@ export function CompareResultScreen({ route }: Props) {
                       {q.model}
                     </Text>
                     <Text style={styles.pillVersion} numberOfLines={1}>
-                      {q.version}
-                    </Text>
-                    <Text style={[styles.pillScore, { color: palette.primary }]}>
-                      {Math.round(score.value * 100)}% confiança
+                      {q.brand} · {q.version}
                     </Text>
                   </View>
                 </View>
@@ -185,29 +193,62 @@ export function CompareResultScreen({ route }: Props) {
           </ScrollView>
         </View>
 
-        {/* Summary card */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Summary value={stats.total} label="Atributos" color={colors.fordBlue} />
-            <SummaryDivider />
-            <Summary
-              value={stats.matches}
-              label="Iguais"
-              color={colors.success}
-            />
-            <SummaryDivider />
-            <Summary
-              value={stats.conflicts}
-              label="Conflitos"
-              color={stats.conflicts > 0 ? colors.warning : colors.textMuted}
-            />
+        {/* Placar da competição */}
+        <View style={styles.standingsCard}>
+          <Text style={styles.standingsEyebrow}>🏆 PLACAR DA COMPARAÇÃO</Text>
+          <Text style={styles.standingsHeadline}>
+            {decidedCount === 0
+              ? 'Sem atributos numéricos para disputar'
+              : champion
+                ? `${champion.query.model} está na frente!`
+                : 'Empate na liderança'}
+          </Text>
+
+          <View style={styles.standingsList}>
+            {standings.map((s) => {
+              const palette = VEHICLE_PALETTE[s.idx];
+              const rank = standings.filter((o) => o.wins > s.wins).length;
+              const isLeader = s.wins === topWins && topWins > 0;
+              return (
+                <View
+                  key={s.query.id}
+                  style={[styles.standingRow, isLeader && styles.standingRowLeader]}
+                >
+                  <Text style={styles.standingMedal}>{medalFor(rank)}</Text>
+                  <View
+                    style={[styles.standingDot, { backgroundColor: palette.primary }]}
+                  />
+                  <View style={styles.standingInfo}>
+                    <Text style={styles.standingModel} numberOfLines={1}>
+                      {s.query.model}
+                    </Text>
+                    <Text style={styles.standingVersion} numberOfLines={1}>
+                      {s.query.version}
+                    </Text>
+                  </View>
+                  <View style={styles.standingWinsBox}>
+                    <Text
+                      style={[
+                        styles.standingWinsValue,
+                        isLeader && styles.standingWinsValueLeader,
+                      ]}
+                    >
+                      {s.wins}
+                    </Text>
+                    <Text style={styles.standingWinsLabel}>
+                      {s.wins === 1 ? 'vitória' : 'vitórias'}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
           </View>
-          {stats.conflicts > 0 ? (
-            <View style={styles.conflictBanner}>
-              <Text style={styles.conflictBannerText}>
-                ⚠️ {stats.conflicts} atributo(s) com valores divergentes entre os veículos
-              </Text>
-            </View>
+
+          {decidedCount > 0 ? (
+            <Text style={styles.standingsFootnote}>
+              Disputa decidida em {decidedCount} atributo(s) numérico(s) — potência,
+              torque, 0-100, preço, autonomia, etc.
+            </Text>
           ) : null}
         </View>
 
@@ -232,11 +273,7 @@ export function CompareResultScreen({ route }: Props) {
               {!isCollapsed ? (
                 <View style={styles.sectionBody}>
                   {section.rows.map((row) => (
-                    <AttributeCard
-                      key={row.attribute}
-                      row={row}
-                      queries={queries}
-                    />
+                    <AttributeCard key={row.attribute} row={row} queries={queries} />
                   ))}
                 </View>
               ) : null}
@@ -249,10 +286,13 @@ export function CompareResultScreen({ route }: Props) {
           <Text style={styles.legendTitle}>Como ler</Text>
           <LegendItem
             symbol="🏆"
-            text="Vencedor numérico (maior potência, menor 0-100, etc)"
+            text="Venceu o atributo (maior potência, menor 0-100, menor preço, etc)"
           />
-          <LegendItem symbol="✓" text="Mesmo valor em todos os veículos" />
-          <LegendItem symbol="⚠️" text="Valores divergentes entre veículos" />
+          <LegendItem symbol="🤝" text="Empate — mesmo valor entre os veículos" />
+          <LegendItem
+            symbol="📊"
+            text="Atributo de texto (motor, transmissão) — comparado, mas sem vencedor"
+          />
           <LegendItem symbol="—" text="Não disponível neste veículo" />
         </View>
       </ScrollView>
@@ -260,25 +300,11 @@ export function CompareResultScreen({ route }: Props) {
   );
 }
 
-function Summary({
-  value,
-  label,
-  color,
-}: {
-  value: number;
-  label: string;
-  color: string;
-}) {
-  return (
-    <View style={styles.summaryItem}>
-      <Text style={[styles.summaryValue, { color }]}>{value}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function SummaryDivider() {
-  return <View style={styles.summaryDivider} />;
+function medalFor(rank: number): string {
+  if (rank === 0) return '🥇';
+  if (rank === 1) return '🥈';
+  if (rank === 2) return '🥉';
+  return `${rank + 1}º`;
 }
 
 function LegendItem({ symbol, text }: { symbol: string; text: string }) {
@@ -305,15 +331,11 @@ function AttributeCard({
       : strategy === 'lower'
         ? 'menor é melhor'
         : null;
+  const isComparable = strategy !== 'none';
+  const winnerModel = row.winnerIdx !== null ? queries[row.winnerIdx].model : null;
 
   return (
-    <View
-      style={[
-        styles.card,
-        row.diverges && styles.cardConflict,
-        row.matches && styles.cardMatch,
-      ]}
-    >
+    <View style={[styles.card, winnerModel ? styles.cardHasWinner : null]}>
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{formatAttr(row.attribute)}</Text>
@@ -321,14 +343,15 @@ function AttributeCard({
             <Text style={styles.cardStrategy}>{strategyLabel}</Text>
           ) : null}
         </View>
-        {row.matches ? (
-          <View style={styles.matchBadge}>
-            <Text style={styles.matchBadgeText}>✓ Iguais</Text>
+        {winnerModel ? (
+          <View style={styles.winnerBadge}>
+            <Text style={styles.winnerBadgeText} numberOfLines={1}>
+              🏆 {winnerModel}
+            </Text>
           </View>
-        ) : null}
-        {row.diverges ? (
-          <View style={styles.conflictBadge}>
-            <Text style={styles.conflictBadgeText}>⚠ Diverge</Text>
+        ) : isComparable ? (
+          <View style={styles.tieBadge}>
+            <Text style={styles.tieBadgeText}>🤝 Empate</Text>
           </View>
         ) : null}
       </View>
@@ -338,10 +361,12 @@ function AttributeCard({
           const palette = VEHICLE_PALETTE[idx];
           const isWinner = row.winnerIdx === idx;
           const bar = row.bars[idx];
-          const score = cell?.available ? computeTruthScore(cell) : null;
 
           return (
-            <View key={`${row.attribute}-${idx}`} style={styles.vehicleRow}>
+            <View
+              key={`${row.attribute}-${idx}`}
+              style={[styles.vehicleRow, isWinner && styles.vehicleRowWinner]}
+            >
               <View style={styles.vehicleRowHeader}>
                 <View
                   style={[styles.vehicleDot, { backgroundColor: palette.primary }]}
@@ -390,16 +415,9 @@ function AttributeCard({
                     </View>
                   ) : null}
 
-                  {score ? (
-                    <View style={styles.scoreRow}>
-                      <View
-                        style={[styles.scoreDot, { backgroundColor: score.color }]}
-                      />
-                      <Text style={[styles.scoreText, { color: score.color }]}>
-                        {Math.round(score.value * 100)}% — {score.label}
-                      </Text>
-                    </View>
-                  ) : null}
+                  <Text style={styles.sourceText} numberOfLines={2}>
+                    Fonte: {cell.source_hint ?? 'não informada'}
+                  </Text>
                 </>
               ) : (
                 <View style={styles.missingLine}>
@@ -425,7 +443,12 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   loadingBox: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   loadingText: { color: colors.textSecondary, marginTop: spacing.md },
-  error: { color: colors.danger, fontSize: 14, textAlign: 'center', paddingHorizontal: spacing.lg },
+  error: {
+    color: colors.danger,
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+  },
   scroll: { paddingBottom: spacing.xxl },
 
   // Pills bar (sticky)
@@ -446,55 +469,64 @@ const styles = StyleSheet.create({
     maxWidth: 220,
     marginRight: spacing.sm,
   },
-  pillDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: spacing.sm,
-  },
+  pillDot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.sm },
   pillContent: { flex: 1 },
   pillModel: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
   pillVersion: { fontSize: 11, color: colors.textSecondary, marginTop: 1 },
-  pillScore: { fontSize: 11, fontWeight: '700', marginTop: 4 },
 
-  // Summary card
-  summaryCard: {
+  // Standings (placar)
+  standingsCard: {
     margin: spacing.lg,
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.fordBlue,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
+    padding: spacing.lg,
   },
-  summaryRow: {
-    flexDirection: 'row',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-  },
-  summaryItem: { flex: 1, alignItems: 'center' },
-  summaryValue: { fontSize: 24, fontWeight: '800' },
-  summaryLabel: {
+  standingsEyebrow: {
+    color: '#A8C0EC',
     fontSize: 11,
+    letterSpacing: 1.2,
+    fontWeight: '800',
+    marginBottom: spacing.xs,
+  },
+  standingsHeadline: {
+    color: '#FFF',
+    fontSize: 19,
+    fontWeight: '800',
+    marginBottom: spacing.md,
+  },
+  standingsList: { gap: spacing.sm },
+  standingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.fordBlueDark,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  standingRowLeader: {
+    backgroundColor: '#FEF3C7',
+  },
+  standingMedal: { fontSize: 20, width: 30, textAlign: 'center' },
+  standingDot: { width: 10, height: 10, borderRadius: 5 },
+  standingInfo: { flex: 1 },
+  standingModel: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  standingVersion: { fontSize: 11, color: colors.textSecondary, marginTop: 1 },
+  standingWinsBox: { alignItems: 'center', minWidth: 56 },
+  standingWinsValue: { fontSize: 22, fontWeight: '900', color: colors.textPrimary },
+  standingWinsValueLeader: { color: '#B45309' },
+  standingWinsLabel: {
+    fontSize: 9,
+    fontWeight: '700',
     color: colors.textSecondary,
-    fontWeight: '600',
-    marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  summaryDivider: { width: 1, backgroundColor: colors.border, marginVertical: 8 },
-  conflictBanner: {
-    backgroundColor: '#FEF3C7',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: '#FCD34D',
-  },
-  conflictBannerText: {
-    color: '#92400E',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
+  standingsFootnote: {
+    color: '#A8C0EC',
+    fontSize: 11,
+    marginTop: spacing.md,
+    lineHeight: 16,
   },
 
   // Sections
@@ -529,8 +561,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.border,
   },
-  cardMatch: { borderLeftColor: colors.success, backgroundColor: '#F0FDF4' },
-  cardConflict: { borderLeftColor: colors.warning, backgroundColor: '#FFFBEB' },
+  cardHasWinner: { borderLeftColor: '#F59E0B', backgroundColor: '#FFFBEB' },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -538,21 +569,31 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cardTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  cardStrategy: { fontSize: 10, color: colors.textSecondary, marginTop: 1, fontStyle: 'italic' },
-  matchBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: '#DCFCE7',
-    borderRadius: radius.pill,
+  cardStrategy: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
+    fontStyle: 'italic',
   },
-  matchBadgeText: { fontSize: 10, fontWeight: '800', color: colors.success },
-  conflictBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  winnerBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     backgroundColor: '#FEF3C7',
     borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    maxWidth: 150,
   },
-  conflictBadgeText: { fontSize: 10, fontWeight: '800', color: '#92400E' },
+  winnerBadgeText: { fontSize: 11, fontWeight: '800', color: '#B45309' },
+  tieBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tieBadgeText: { fontSize: 11, fontWeight: '800', color: colors.textSecondary },
   cardBody: { gap: spacing.md },
 
   // Vehicle row inside card
@@ -560,6 +601,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: spacing.sm,
     borderRadius: radius.sm,
+  },
+  vehicleRowWinner: {
+    borderWidth: 1,
+    borderColor: '#F59E0B',
   },
   vehicleRowHeader: {
     flexDirection: 'row',
@@ -582,7 +627,12 @@ const styles = StyleSheet.create({
     gap: 4,
     marginBottom: 6,
   },
-  valueText: { fontSize: 15, color: colors.textPrimary, fontWeight: '600', flexShrink: 1 },
+  valueText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    flexShrink: 1,
+  },
   unitText: { fontSize: 11, color: colors.textMuted, fontWeight: '600' },
   barTrack: {
     height: 6,
@@ -592,9 +642,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   barFill: { height: 6, borderRadius: 3 },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  scoreDot: { width: 6, height: 6, borderRadius: 3 },
-  scoreText: { fontSize: 11, fontWeight: '700' },
+  sourceText: { fontSize: 11, color: colors.textMuted, fontStyle: 'italic' },
 
   missingLine: { paddingVertical: 4 },
   missingText: { color: colors.textMuted, fontStyle: 'italic', fontSize: 13 },
@@ -610,7 +658,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   legendTitle: { ...typography.label, marginBottom: spacing.sm },
-  legendItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: spacing.sm },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: spacing.sm,
+  },
   legendSymbol: { fontSize: 14, width: 24 },
   legendText: { fontSize: 12, color: colors.textSecondary, flex: 1 },
 });

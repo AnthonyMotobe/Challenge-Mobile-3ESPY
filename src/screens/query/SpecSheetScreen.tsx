@@ -58,7 +58,6 @@ export function SpecSheetScreen({ navigation, route }: Props) {
     <ScreenContainer>
       <SpecSheetView
         query={query}
-        onOpenSources={() => navigation.navigate('SourcesConflicts', { query })}
         onSecondaryAction={() => navigation.popToTop()}
         secondaryActionLabel="Nova consulta"
       />

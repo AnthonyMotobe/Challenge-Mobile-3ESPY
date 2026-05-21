@@ -5,7 +5,6 @@ import { AttributeSelectorScreen } from '@/screens/query/AttributeSelectorScreen
 import { ScanToSpecScreen } from '@/screens/query/ScanToSpecScreen';
 import { ProcessingScreen } from '@/screens/query/ProcessingScreen';
 import { SpecSheetScreen } from '@/screens/query/SpecSheetScreen';
-import { SourcesConflictsScreen } from '@/screens/query/SourcesConflictsScreen';
 import { colors } from '@/theme/colors';
 import type { QueryStackParamList } from '@/navigation/types';
 
@@ -45,11 +44,6 @@ export function QueryStack() {
         name="SpecSheet"
         component={SpecSheetScreen}
         options={{ title: 'Ficha técnica' }}
-      />
-      <Stack.Screen
-        name="SourcesConflicts"
-        component={SourcesConflictsScreen}
-        options={{ title: 'Fontes & conflitos' }}
       />
     </Stack.Navigator>
   );

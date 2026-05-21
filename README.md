@@ -1,10 +1,10 @@
 # Ford Scan-to-Spec — App Mobile
 
 App mobile da disciplina **Mobile Development & IoT** (FIAP — 3ESPY) para o
-desafio Ford. O fluxo principal é o **Scan-to-Spec com Truth Score**: o usuário
-informa marca/modelo/versão (e opcionalmente envia uma imagem ou PDF), e recebe
-uma ficha técnica padronizada com nível de confiança por atributo, indicando
-fontes e conflitos.
+desafio Ford. O fluxo principal é o **Scan-to-Spec**: o usuário informa
+marca/modelo/versão (e opcionalmente envia uma imagem ou PDF), e recebe uma
+ficha técnica padronizada — cada atributo aparece com o **valor** e a **fonte**
+de onde a informação foi extraída.
 
 ## Equipe
 
@@ -46,33 +46,24 @@ fontes e conflitos.
 | Atributos | `src/screens/query/AttributeSelectorScreen.tsx` | Seletor de atributos |
 | Scan-to-Spec | `src/screens/query/ScanToSpecScreen.tsx` | Upload imagem/PDF/print + câmera |
 | Processando | `src/screens/query/ProcessingScreen.tsx` | Estado de extração |
-| Ficha técnica | `src/screens/query/SpecSheetScreen.tsx` | Ficha final + Truth Score |
-| Fontes & conflitos | `src/screens/query/SourcesConflictsScreen.tsx` | Auditoria das fontes |
+| Ficha técnica | `src/screens/query/SpecSheetScreen.tsx` | Ficha final (valor + fonte) |
 | Histórico | `src/screens/history/HistoryListScreen.tsx` | Consultas anteriores (com cache offline) |
-| Detalhes do histórico | `src/navigation/HistoryStack.tsx` | Reabrir ficha + fontes |
+| Detalhes do histórico | `src/navigation/HistoryStack.tsx` | Reabrir ficha |
 | Comparação — seleção | `src/screens/compare/CompareSelectionScreen.tsx` | Multi-seleção (2-4 consultas) |
-| Comparação — resultado | `src/screens/compare/CompareResultScreen.tsx` | Comparativo lado a lado com Truth Score por veículo |
+| Comparação — resultado | `src/screens/compare/CompareResultScreen.tsx` | Comparativo lado a lado |
 | Perfil | `src/screens/profile/ProfileScreen.tsx` | Sessão + permissões |
 
 ---
 
-## 3. Truth Score
+## 3. Ficha técnica — valor + fonte
 
 Cada atributo retornado pela API vem com `value`, `available`, `normalized_unit`
-e `source_hint`. O app converte isso em um score 0–1 que vira badge colorido
-+ barra de confiança ([`src/utils/truthScore.ts`](src/utils/truthScore.ts)):
+e `source_hint`. A ficha técnica mostra **somente atributos que vieram com dado
+real** — atributos sem informação não são exibidos.
 
-| Sinal | Peso |
-|---|---|
-| `available=false` | score = 0 (badge "Não encontrado") |
-| Fonte oficial (manual, site oficial, ficha técnica) | +0.4 |
-| Review/imprensa especializada | +0.2 |
-| `normalized_unit` presente | +0.1 |
-| Base por atributo disponível | 0.5 |
-
-Score agregado (no topo da ficha) = média de todos os atributos.
-Conflitos são detectados quando o mesmo atributo aparece com valores
-diferentes na mesma resposta.
+Cada card de atributo apresenta:
+- **Valor** (com unidade normalizada, quando houver)
+- **Fonte** — de onde a informação foi extraída (`source_hint`)
 
 ---
 
@@ -115,17 +106,27 @@ O app tem dois modos, controlados por `app.json → expo.extra.mockMode`:
 | **Real** | `false` | API REST externa (a do projeto Ford) | Quando há um backend real rodando |
 
 No modo Demo aparece um **badge "MODO DEMO"** amarelo no canto superior direito.
-Qualquer e-mail/senha entra. O fluxo completo funciona — incluindo Truth Score,
-conflitos, histórico, scan-to-spec e notificações.
+Qualquer e-mail/senha entra. O fluxo completo funciona — incluindo ficha técnica,
+histórico, scan-to-spec, comparação e notificações.
 
-**Pra usar com backend real**: edite `app.json`:
+**Pra usar com backend real**: edite `app.json` e troque `mockMode` para `false`:
 
 ```json
 "extra": {
-  "apiBaseUrl": "http://<host-da-api>:<porta>",
+  "apiBaseUrl": "auto",
   "mockMode": false
 }
 ```
+
+### Detecção automática de IP (`apiBaseUrl: "auto"`)
+
+Com `apiBaseUrl` em `"auto"`, o app **descobre sozinho** o endereço do backend:
+ele usa o mesmo IP pelo qual o Expo Go se conectou ao Metro, na porta `8080`.
+Resultado: ao trocar de Wi-Fi, **não é preciso editar IP** — basta o celular
+estar na mesma rede do notebook (modo LAN, `npx expo start`).
+
+Se preferir fixar manualmente, troque `"auto"` por `"http://<host>:8080"`.
+Em modo tunnel (`--tunnel`), a detecção não funciona — defina o host à mão.
 
 Depois aperte `r` no terminal do Metro pra recarregar.
 
@@ -140,9 +141,9 @@ Depois aperte `r` no terminal do Metro pra recarregar.
    - Passo 2 — selecione atributos agrupados (motor, transmissão, conforto, comercial) ou crie custom.
    - Passo 3 — opcional: tire foto, escolha da galeria ou envie PDF do manual.
    - Passo 4 — Processing exibe etapas animadas enquanto chama a API.
-4. **Ficha técnica** abre com Truth Score agregado, contagem por nível e cards por atributo.
-5. **Fontes & conflitos** detalha a origem de cada valor, categoriza (oficial / review / outra) e destaca conflitos.
-6. **Notificação local** dispara ao final da extração ("Ficha técnica pronta · Truth Score X%").
+4. **Ficha técnica** abre listando os atributos encontrados, cada um com valor e fonte.
+5. **Comparação** permite escolher 2-4 consultas e ver os veículos lado a lado.
+6. **Notificação local** dispara ao final da extração.
 
 ---
 
@@ -151,11 +152,10 @@ Depois aperte `r` no terminal do Metro pra recarregar.
 - ✅ **Scan-to-Spec** com câmera + galeria + PDF (`expo-image-picker` + `expo-document-picker`)
 - ✅ **Histórico local** em AsyncStorage com fallback offline
 - ✅ **Notificação local** ao concluir a extração (`expo-notifications`)
-- ✅ **Truth Score** com 4 níveis (alta/média/baixa/faltando), barra de confiança e badge
 - ✅ **Refresh automático** de JWT via interceptor axios
 - ✅ **Cache de scans** dos últimos 50 anexos
 - ✅ **Atualização ao focar** nas telas Home e Histórico (`useFocusEffect`)
-- ✅ **Comparação lado a lado** de 2-4 veículos com vencedor por atributo, destaque de divergências e Truth Score por veículo
+- ✅ **Comparação lado a lado** de 2-4 veículos com vencedor por atributo e destaque de divergências
 
 ---
 
@@ -172,13 +172,13 @@ ford-mobile-app/
     ├── api/                         # axios + endpoints + mocks
     ├── components/                  # UI reutilizável
     ├── contexts/                    # AuthContext + QueryDraftContext
-    ├── navigation/                  # Auth/App/Query/History navigators
+    ├── navigation/                  # Auth/App/Query/History/Compare navigators
     ├── notifications/               # wrapper expo-notifications
-    ├── screens/                     # telas (auth, home, query, history, profile)
+    ├── screens/                     # telas (auth, home, query, history, compare, profile)
     ├── storage/                     # SecureStore (tokens) + AsyncStorage (cache)
     ├── theme/                       # colors, spacing, typography
     ├── types/                       # tipos da API
-    └── utils/                       # truthScore + detecção de conflitos
+    └── utils/                       # helpers de comparação + responsividade
 ```
 
 ---
@@ -204,11 +204,11 @@ Tipos das respostas estão em [`src/types/api.ts`](src/types/api.ts).
 
 1. **Abre o app** → mostra tela inicial com últimas consultas
 2. **Nova consulta** → toca em "Ranger Raptor · 2024" (preset)
-3. **Atributos** → toca em "Todos" pra selecionar os 14 atributos
+3. **Atributos** → toca em "Todos" pra selecionar os atributos
 4. **Scan-to-Spec** → tira uma foto ou pega da galeria
 5. **Processing** → mostra os 4 steps animados
-6. **Ficha técnica** → mostra Truth Score agregado + 14 atributos com badge de confiança
-7. **Fontes & Conflitos** → mostra categorização (oficial/review/outra)
+6. **Ficha técnica** → mostra os atributos encontrados, cada um com valor e fonte
+7. **Comparação** → seleciona 2-3 consultas e vê os veículos lado a lado
 8. **Histórico** → volta na tab, mostra que a consulta ficou salva
 
 ---

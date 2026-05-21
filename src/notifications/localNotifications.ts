@@ -35,14 +35,14 @@ export async function notifyExtractionComplete(params: {
   brand: string;
   model: string;
   version: string;
-  truthScorePercent: number;
+  attributesFound: number;
 }): Promise<void> {
   const granted = await ensureNotificationPermission();
   if (!granted) return;
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Ficha técnica pronta',
-      body: `${params.brand} ${params.model} ${params.version} — Truth Score ${params.truthScorePercent}%`,
+      body: `${params.brand} ${params.model} ${params.version} — ${params.attributesFound} atributo(s) encontrado(s)`,
       data: { kind: 'extraction.completed' },
     },
     trigger: null,
