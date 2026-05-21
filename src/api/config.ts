@@ -52,10 +52,10 @@ export function resolveApiBaseUrl(): string {
 
   const host = String(hostUri).split('/')[0].split(':')[0].trim();
   if (host && host !== 'localhost' && !host.endsWith('.exp.direct')) {
-    return `http://${host}:${API_PORT}`;
+    return `https://${host}:${API_PORT}`;
   }
 
-  return `http://localhost:${API_PORT}`;
+  return `https://localhost:${API_PORT}`;
 }
 
 export const apiBaseUrl: string = resolveApiBaseUrl();
