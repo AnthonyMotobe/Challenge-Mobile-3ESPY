@@ -1,16 +1,15 @@
 # Ford Scan-to-Spec — App Mobile
 
 App mobile da disciplina **Mobile Development & IoT** (FIAP — 3ESPY) para o
-desafio Ford. O fluxo principal é o **Scan-to-Spec**: o usuário informa
-marca/modelo/versão (e opcionalmente envia uma imagem ou PDF), e recebe uma
-ficha técnica padronizada — cada atributo aparece com o **valor** e a **fonte**
-de onde a informação foi extraída.
+desafio Ford. O fluxo principal: o usuário informa **marca / modelo / versão**,
+escolhe os atributos que quer e recebe uma **ficha técnica padronizada** — cada
+atributo aparece com o **valor** e a **fonte** de onde a informação foi extraída.
 
 > **Escopo deste repositório:** contém **apenas o aplicativo mobile**
-> (React Native + Expo). A API REST é um projeto **separado**, mantido em seu
-> próprio repositório e com ciclo de deploy independente. O app apenas
-> **consome** essa API — os endpoints esperados estão na seção 9. Para rodar
-> sem nenhum backend, use o **modo Demo** (seção 5).
+> (React Native + Expo). A **API REST é um projeto separado**, mantido em seu
+> próprio repositório (`Ford-api`), com ciclo de deploy independente. Este app
+> apenas **consome** essa API. Para rodar **sem backend nenhum**, use o
+> **Modo Demo** (seção 5).
 
 ## Equipe
 
@@ -34,29 +33,27 @@ de onde a informação foi extraída.
 | Estado | React Context (Auth + QueryDraft) |
 | HTTP | axios com interceptor de JWT + refresh automático |
 | Storage seguro | expo-secure-store (tokens JWT) |
-| Cache local | @react-native-async-storage/async-storage (histórico, scans) |
-| Câmera / Galeria | expo-image-picker + expo-camera |
-| Documentos / PDF | expo-document-picker |
+| Cache local | @react-native-async-storage/async-storage (histórico de consultas) |
 | Notificações locais | expo-notifications |
+| Config de ambiente | arquivo `.env` (variáveis `EXPO_PUBLIC_*`) |
 
 ---
 
-## 2. Telas implementadas (cobertura do enunciado)
+## 2. Telas implementadas
 
 | Tela | Arquivo | Demanda atendida |
 |---|---|---|
-| Login | `src/screens/auth/LoginScreen.tsx` | Auth |
+| Login | `src/screens/auth/LoginScreen.tsx` | Autenticação |
 | Registro | `src/screens/auth/RegisterScreen.tsx` | Onboarding |
-| Início | `src/screens/home/HomeScreen.tsx` | Tela inicial + recentes |
+| Início | `src/screens/home/HomeScreen.tsx` | Tela inicial + consultas recentes |
 | Veículo | `src/screens/query/VehicleFormScreen.tsx` | Formulário marca/modelo/versão |
 | Atributos | `src/screens/query/AttributeSelectorScreen.tsx` | Seletor de atributos |
-| Scan-to-Spec | `src/screens/query/ScanToSpecScreen.tsx` | Upload imagem/PDF/print + câmera |
-| Processando | `src/screens/query/ProcessingScreen.tsx` | Estado de extração |
+| Processando | `src/screens/query/ProcessingScreen.tsx` | Estado da extração |
 | Ficha técnica | `src/screens/query/SpecSheetScreen.tsx` | Ficha final (valor + fonte) |
-| Histórico | `src/screens/history/HistoryListScreen.tsx` | Consultas anteriores (com cache offline) |
-| Detalhes do histórico | `src/navigation/HistoryStack.tsx` | Reabrir ficha |
+| Histórico | `src/screens/history/HistoryListScreen.tsx` | Consultas anteriores (cache offline) |
+| Detalhes do histórico | `src/navigation/HistoryStack.tsx` | Reabrir uma ficha salva |
 | Comparação — seleção | `src/screens/compare/CompareSelectionScreen.tsx` | Multi-seleção (2-4 consultas) |
-| Comparação — resultado | `src/screens/compare/CompareResultScreen.tsx` | Comparativo lado a lado |
+| Comparação — resultado | `src/screens/compare/CompareResultScreen.tsx` | Placar comparativo |
 | Perfil | `src/screens/profile/ProfileScreen.tsx` | Sessão + permissões |
 
 ---
@@ -77,122 +74,167 @@ Cada card de atributo apresenta:
 
 ### Pré-requisitos
 
-- **Node 20+** (recomendo 22 LTS) e npm
-- **Expo Go** instalado no celular (Play Store / App Store) **ou** emulador
+- **Node 20+** (recomendado: 22 LTS) e npm
+- **Expo Go** instalado no celular (Play Store / App Store) **ou** um emulador
 
 ### Instalação
 
 ```bash
 cd ford-mobile-app
 npm install
-cp .env.example .env   # cria a config local (veja seção 5)
-npm start
-```
-
-No terminal do Expo:
-- `a` → abre no Android emulator
-- `i` → abre no iOS simulator (macOS)
-- escaneie o QR code com Expo Go (Android) ou Câmera (iOS) para abrir no celular
-
-Se sua rede local estiver instável (VPN, adaptadores virtuais, etc),
-use tunnel:
-
-```bash
-npx expo start --tunnel
-```
-
----
-
-## 5. Configuração — arquivo `.env`
-
-Toda a configuração de ambiente fica no arquivo **`.env`** na raiz do projeto.
-Esse arquivo **não vai pro git** (cada pessoa/máquina tem o seu) — o que é
-versionado é o template **`.env.example`**. Para criar o seu:
-
-```bash
 cp .env.example .env
 ```
 
-| Variável | Valores | O que faz |
-|---|---|---|
-| `EXPO_PUBLIC_MOCK_MODE` | `true` / `false` | `true` = modo Demo (dados locais, sem backend); `false` = consome a API real |
-| `EXPO_PUBLIC_API_URL` | `auto` ou `http://host:8080` | Endereço da API. `auto` detecta o IP do host sozinho |
-
-> Após editar o `.env`, reinicie o Metro com **`npx expo start --clear`** —
-> as variáveis `EXPO_PUBLIC_*` são embutidas no bundle no momento do build.
-
-### Modo Demo (`EXPO_PUBLIC_MOCK_MODE=true`)
-
-Usa fixtures locais com 4 Fords (Ranger Raptor, Mach-E, Maverick, Bronco).
-Aparece um **badge "MODO DEMO"** amarelo no topo. Qualquer e-mail/senha entra.
-O fluxo completo funciona offline — ficha técnica, histórico, scan-to-spec,
-comparação e notificações. Ideal para avaliar o app **sem depender da API**.
-
-### Modo Real (`EXPO_PUBLIC_MOCK_MODE=false`)
-
-O app consome a **API REST** (projeto separado, em outro repositório).
-Defina `EXPO_PUBLIC_API_URL`:
-
-- **`auto`** — o app descobre o endereço sozinho: usa o mesmo IP pelo qual o
-  Expo Go se conectou ao Metro, na porta `8080`. Ao trocar de Wi-Fi, **não é
-  preciso editar nada** — basta o celular estar na mesma rede do host (modo LAN).
-- **`http://<host>:8080`** — fixa o endereço manualmente. Use em modo tunnel
-  (`--tunnel`), onde a detecção automática não funciona.
+Depois, escolha um dos dois modos de execução na **seção 5**.
 
 ---
 
-## 6. Fluxo completo (end-to-end)
+## 5. Como rodar — escolha o modo
 
-1. **Login** ou registro (qualquer credencial entra no modo Demo).
-2. **Home** mostra últimas 5 consultas (com cache local para modo offline).
-3. **Nova consulta**:
-   - Passo 1 — informe marca/modelo/versão (com presets para Ford Ranger Raptor, Maverick etc).
-   - Passo 2 — selecione atributos agrupados (motor, transmissão, conforto, comercial) ou crie custom.
-   - Passo 3 — opcional: tire foto, escolha da galeria ou envie PDF do manual.
-   - Passo 4 — Processing exibe etapas animadas enquanto chama a API.
-4. **Ficha técnica** abre listando os atributos encontrados, cada um com valor e fonte.
-5. **Comparação** permite escolher 2-4 consultas e ver os veículos lado a lado.
+O app roda de **duas formas**, controladas pela variável `EXPO_PUBLIC_MOCK_MODE`
+no arquivo `.env`. Escolha conforme o que você quer testar:
+
+### 🟢 Modo Demo — sem backend (mais simples)
+
+Use para avaliar o app **sem depender da API**. Dados locais (fixtures de 4
+Fords), funciona 100% offline.
+
+**1.** No arquivo `.env`, deixe:
+```
+EXPO_PUBLIC_MOCK_MODE=true
+```
+
+**2.** Inicie o app:
+```bash
+npx expo start --clear
+```
+
+**3.** Abra no Expo Go (QR code) ou no navegador (`w`).
+
+Pronto. Aparece um badge **"MODO DEMO"** amarelo no topo, **qualquer e-mail/senha
+entra**, e o fluxo completo funciona — ficha técnica, histórico, comparação e
+notificações — tudo com dados simulados.
+
+### 🔵 Modo Real — consumindo a API
+
+Use para testar a integração de verdade. **Requer o backend `Ford-api` rodando**
+(é um projeto separado, em outro repositório).
+
+**1.** Suba o backend. No projeto **`Ford-api`**:
+```bash
+docker compose up
+```
+Aguarde estabilizar (~30s) e confirme que respondeu:
+```bash
+curl http://localhost:8080
+# → {"service":"ford-api-gateway","status":"ok","mode":"dev-http"}
+```
+
+**2.** No arquivo `.env` deste app, deixe:
+```
+EXPO_PUBLIC_MOCK_MODE=false
+EXPO_PUBLIC_API_URL=auto
+```
+
+**3.** Inicie o app:
+```bash
+npx expo start --clear
+```
+
+**4.** Abra no Expo Go ou no navegador (`w`). O badge "MODO DEMO" **não aparece**
+— o app está consumindo a API real. Registre uma conta e faça uma consulta.
+
+> **Importante:** sempre que mudar o `.env`, reinicie o Metro com `--clear`.
+> As variáveis `EXPO_PUBLIC_*` são embutidas no bundle no momento do build.
+
+#### Problemas comuns no Modo Real
+
+| Sintoma | Causa provável | Solução |
+|---|---|---|
+| `502 Bad Gateway` | nginx com IP defasado de um serviço | No `Ford-api`: `docker compose restart nginx` |
+| `Network Error` no app | backend não respondeu | Confirme o `curl http://localhost:8080` |
+| Continua em "MODO DEMO" | Metro não releu o `.env` | Pare o Metro e rode `npx expo start --clear` |
+
+---
+
+## 6. Configuração — arquivo `.env`
+
+O `.env` fica na raiz do projeto e **não vai para o git** (cada máquina tem o
+seu). O que é versionado é o template **`.env.example`**.
+
+| Variável | Valores | O que faz |
+|---|---|---|
+| `EXPO_PUBLIC_MOCK_MODE` | `true` / `false` | `true` = Modo Demo (dados locais); `false` = consome a API real |
+| `EXPO_PUBLIC_API_URL` | `auto` ou `http://host:8080` | Endereço da API. `auto` detecta o IP do host automaticamente (modo LAN). Em tunnel, fixe o endereço manualmente |
+
+---
+
+## 7. Fluxo de uso (end-to-end)
+
+1. **Login / registro** — no Modo Demo, qualquer credencial entra.
+2. **Início** — mostra as últimas consultas (com cache local para uso offline).
+3. **Nova consulta** — 3 passos:
+   - **Passo 1 — Veículo:** marca, modelo e versão (com presets de Fords).
+   - **Passo 2 — Atributos:** selecione os atributos agrupados (motor, transmissão, conforto, comercial) ou crie um personalizado.
+   - **Passo 3 — Processando:** o app chama a API e monta a ficha.
+4. **Ficha técnica** — lista os atributos encontrados, cada um com valor e fonte.
+5. **Comparação** — escolha 2-4 consultas e veja o placar comparativo (seção 8).
 6. **Notificação local** dispara ao final da extração.
 
 ---
 
-## 7. Diferenciais entregues
+## 8. Comparação de veículos
 
-- ✅ **Scan-to-Spec** com câmera + galeria + PDF (`expo-image-picker` + `expo-document-picker`)
-- ✅ **Histórico local** em AsyncStorage com fallback offline
-- ✅ **Notificação local** ao concluir a extração (`expo-notifications`)
-- ✅ **Refresh automático** de JWT via interceptor axios
-- ✅ **Cache de scans** dos últimos 50 anexos
-- ✅ **Atualização ao focar** nas telas Home e Histórico (`useFocusEffect`)
-- ✅ **Comparação lado a lado** de 2-4 veículos com vencedor por atributo e destaque de divergências
+A tela de comparação trata o confronto como um **placar de competição**:
+
+- Cada **atributo numérico** (potência, torque, 0-100, preço, autonomia…) tem um
+  **vencedor** — quem tem o melhor valor leva o ponto.
+- Um **placar** no topo soma as vitórias e mostra o ranking com medalhas 🥇🥈🥉.
+- Cada card de atributo destaca o veículo vencedor (🏆) e mostra valor + fonte
+  de cada veículo.
+- Atributos de texto (motor, transmissão) são comparados, mas não têm vencedor.
 
 ---
 
-## 8. Estrutura do código
+## 9. Diferenciais entregues
+
+- ✅ **Modo Demo offline** — app 100% funcional sem backend, com dados locais
+- ✅ **Detecção automática de IP** da API (`EXPO_PUBLIC_API_URL=auto`)
+- ✅ **Histórico local** em AsyncStorage com fallback offline
+- ✅ **Notificação local** ao concluir a extração (`expo-notifications`)
+- ✅ **Refresh automático de JWT** via interceptor do axios
+- ✅ **Atualização ao focar** nas telas Início e Histórico (`useFocusEffect`)
+- ✅ **Comparação** de 2-4 veículos com placar de vitórias e vencedor por atributo
+- ✅ **ErrorBoundary** global — uma exceção de tela não derruba o app
+
+---
+
+## 10. Estrutura do código
 
 ```
 ford-mobile-app/
-├── App.tsx                          # bootstrap dos providers
-├── app.json                         # config Expo
+├── App.tsx                 # bootstrap dos providers + ErrorBoundary
+├── app.json                # config do Expo
+├── .env / .env.example     # configuração de ambiente (seção 6)
 ├── package.json
 ├── tsconfig.json
-├── babel.config.js                  # alias @/ → src/
+├── babel.config.js         # alias @/ → src/
 └── src/
-    ├── api/                         # axios + endpoints + mocks
-    ├── components/                  # UI reutilizável
-    ├── contexts/                    # AuthContext + QueryDraftContext
-    ├── navigation/                  # Auth/App/Query/History/Compare navigators
-    ├── notifications/               # wrapper expo-notifications
-    ├── screens/                     # telas (auth, home, query, history, compare, profile)
-    ├── storage/                     # SecureStore (tokens) + AsyncStorage (cache)
-    ├── theme/                       # colors, spacing, typography
-    ├── types/                       # tipos da API
-    └── utils/                       # helpers de comparação + responsividade
+    ├── api/                # axios, endpoints, mocks e config de ambiente
+    ├── components/         # UI reutilizável + AppErrorBoundary
+    ├── contexts/           # AuthContext + QueryDraftContext
+    ├── navigation/         # navegadores Auth / App / Query / History / Compare
+    ├── notifications/      # wrapper de expo-notifications
+    ├── screens/            # telas (auth, home, query, history, compare, profile)
+    ├── storage/            # SecureStore (tokens) + AsyncStorage (cache)
+    ├── theme/              # cores, espaçamentos, tipografia
+    ├── types/              # tipos da API
+    └── utils/              # helpers de formatação, comparação e responsividade
 ```
 
 ---
 
-## 9. Endpoints consumidos
+## 11. Endpoints consumidos
 
 | Método | Path | Tela |
 |---|---|---|
@@ -205,30 +247,30 @@ ford-mobile-app/
 | GET | `/vehicles/queries/{id}` | SpecSheetScreen + HistoryDetail |
 
 Todos esperam JWT no header `Authorization: Bearer <token>` (exceto register/login).
-Tipos das respostas estão em [`src/types/api.ts`](src/types/api.ts).
+Os tipos das respostas estão em [`src/types/api.ts`](src/types/api.ts).
 
 ---
 
-## 10. Roteiro de demo (3-4 minutos)
+## 12. Roteiro de demo (3-4 minutos)
 
-1. **Abre o app** → mostra tela inicial com últimas consultas
-2. **Nova consulta** → toca em "Ranger Raptor · 2024" (preset)
-3. **Atributos** → toca em "Todos" pra selecionar os atributos
-4. **Scan-to-Spec** → tira uma foto ou pega da galeria
-5. **Processing** → mostra os 4 steps animados
-6. **Ficha técnica** → mostra os atributos encontrados, cada um com valor e fonte
-7. **Comparação** → seleciona 2-3 consultas e vê os veículos lado a lado
-8. **Histórico** → volta na tab, mostra que a consulta ficou salva
+1. **Abre o app** → tela inicial com as últimas consultas
+2. **Nova consulta** → toca no preset "Ranger Raptor · 2024"
+3. **Atributos** → toca em "Todos" para selecionar os atributos
+4. **Processando** → mostra as etapas animadas da extração
+5. **Ficha técnica** → mostra os atributos, cada um com valor e fonte
+6. **Comparação** → seleciona 2-3 consultas e mostra o placar comparativo
+7. **Histórico** → volta na aba e mostra que a consulta ficou salva
 
 ---
 
-## 11. Scripts úteis
+## 13. Scripts úteis
 
 ```bash
-npm start                          # Expo dev server
-npx expo start --tunnel            # quando a rede local não coopera
-npm run android                    # abre emulador Android
-npm run ios                        # abre simulador iOS (macOS)
-npm run web                        # web preview
-npm run typecheck                  # tsc --noEmit
+npm start                  # Expo dev server
+npx expo start --clear     # reinicia limpando o cache (use após editar o .env)
+npx expo start --tunnel    # quando a rede local não coopera
+npm run android            # abre no emulador Android
+npm run ios                # abre no simulador iOS (macOS)
+npm run web                # preview no navegador
+npm run typecheck          # tsc --noEmit
 ```
