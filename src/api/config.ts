@@ -12,7 +12,7 @@ import Constants from 'expo-constants';
  *  - EXPO_PUBLIC_MOCK_MODE  "true" (demo, dados locais) ou "false" (API real)
  */
 
-/** Porta HTTP padrão do gateway da API (usada na detecção automática). */
+/** Porta HTTP do gateway usada na detecção automática (modo "auto"). */
 const API_PORT = 8080;
 
 /**
