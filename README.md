@@ -118,41 +118,67 @@ notificações — tudo com dados simulados.
 ### 🔵 Modo Real — consumindo a API
 
 Use para testar a integração de verdade. **Requer o backend `Ford-api` rodando**
-(é um projeto separado, em outro repositório).
+(é um projeto separado, em outro repositório). O gateway da API sobe em
+**HTTPS na porta 8443**, com um certificado autoassinado.
 
 **1.** Suba o backend. No projeto **`Ford-api`**:
 ```bash
 docker compose up
 ```
-Aguarde estabilizar (~30s) e confirme que respondeu:
-```bash
-curl http://localhost:8080
-# → {"service":"ford-api-gateway","status":"ok","mode":"dev-http"}
-```
+Aguarde estabilizar (~30s).
 
-**2.** No arquivo `.env` deste app, deixe:
+**2. Autorize o certificado — passo obrigatório.** Abra numa aba do navegador:
+```
+https://localhost:8443
+```
+Como o certificado é autoassinado, o navegador mostra o aviso *"A sua conexão
+não é privada"*. Clique em **Avançado → Continuar para localhost (não seguro)**.
+Deve responder:
+```
+{"service":"ford-api-gateway","status":"ok","mode":"dev-http"}
+```
+Isso registra uma exceção de segurança no navegador — sem ela, **todas** as
+chamadas do app são bloqueadas (entenda o porquê logo abaixo).
+
+**3.** No arquivo `.env` deste app, deixe:
 ```
 EXPO_PUBLIC_MOCK_MODE=false
-EXPO_PUBLIC_API_URL=auto
+EXPO_PUBLIC_API_URL=https://localhost:8443
 ```
 
-**3.** Inicie o app:
+**4.** Inicie o app:
 ```bash
 npx expo start --clear
 ```
 
-**4.** Abra no Expo Go ou no navegador (`w`). O badge "MODO DEMO" **não aparece**
-— o app está consumindo a API real. Registre uma conta e faça uma consulta.
+**5.** Abra no navegador (`w`). O badge "MODO DEMO" **não aparece** — o app está
+consumindo a API real. Registre uma conta e faça uma consulta.
 
 > **Importante:** sempre que mudar o `.env`, reinicie o Metro com `--clear`.
 > As variáveis `EXPO_PUBLIC_*` são embutidas no bundle no momento do build.
+
+> **Celular físico (Expo Go):** o certificado autoassinado da porta 8443 não é
+> aceito automaticamente no aparelho. Para testar no celular, use o **Modo Demo**
+> ou um backend com certificado válido.
+
+#### Por que preciso autorizar o certificado?
+
+A API é servida por **HTTPS com certificado autoassinado** (gerado localmente,
+não emitido por uma autoridade certificadora). Por padrão, o navegador
+**bloqueia** qualquer requisição a um certificado em que não confia — o app
+falha com `ERR_CERT_AUTHORITY_INVALID` antes mesmo de a requisição sair.
+
+Abrir `https://localhost:8443` e aceitar o aviso cria uma **exceção**: você diz
+ao navegador que confia naquele certificado. A exceção pode cair ao fechar o
+navegador — se o erro voltar, refaça o passo 2.
 
 #### Problemas comuns no Modo Real
 
 | Sintoma | Causa provável | Solução |
 |---|---|---|
+| `ERR_CERT_AUTHORITY_INVALID` | navegador não confia no certificado autoassinado | Abra `https://localhost:8443` e aceite o aviso (passo 2) |
 | `502 Bad Gateway` | nginx com IP defasado de um serviço | No `Ford-api`: `docker compose restart nginx` |
-| `Network Error` no app | backend não respondeu | Confirme o `curl http://localhost:8080` |
+| `Network Error` no app | backend não respondeu | Confirme com `curl -k https://localhost:8443` |
 | Continua em "MODO DEMO" | Metro não releu o `.env` | Pare o Metro e rode `npx expo start --clear` |
 
 ---
@@ -165,7 +191,7 @@ seu). O que é versionado é o template **`.env.example`**.
 | Variável | Valores | O que faz |
 |---|---|---|
 | `EXPO_PUBLIC_MOCK_MODE` | `true` / `false` | `true` = Modo Demo (dados locais); `false` = consome a API real |
-| `EXPO_PUBLIC_API_URL` | `auto` ou `http://host:8080` | Endereço da API. `auto` detecta o IP do host automaticamente (modo LAN). Em tunnel, fixe o endereço manualmente |
+| `EXPO_PUBLIC_API_URL` | `auto`, `https://localhost:8443` ou `http://host:8080` | Endereço da API. `auto` detecta o IP do host por HTTP (porta 8080, modo LAN). Para HTTPS (porta 8443) ou tunnel, fixe o endereço completo |
 
 ---
 
