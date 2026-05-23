@@ -1,17 +1,14 @@
- Ford Scan-to-Spec — App Mobile
+# Ford Scan-to-Spec — App Mobile
 
-App mobile da disciplina **Mobile Development & IoT** (FIAP — 3ESPY) para o
-desafio Ford. O fluxo principal: o usuário informa **marca / modelo / versão**,
-escolhe os atributos que quer e recebe uma **ficha técnica padronizada** — cada
-atributo aparece com o **valor** e a **fonte** de onde a informação foi extraída.
+App mobile para a disciplina **Mobile Development & IoT** (FIAP — 3ESPY) no desafio Ford. 
 
-> **Escopo deste repositório:** contém **apenas o aplicativo mobile**
-> (React Native + Expo). A **API REST é um projeto separado**, mantido em seu
-> próprio repositório (`Ford-api`), com ciclo de deploy independente. Este app
-> apenas **consome** essa API. Para rodar **sem backend nenhum**, use o
-> **Modo Demo** (seção 5).
+**Objetivo:** o usuário informa **marca / modelo / versão**, escolhe os atributos desejados e recebe uma **ficha técnica padronizada** com **valor** e **fonte** de cada informação.
 
-## Equipe
+> 📌 **Este repositório contém apenas a aplicação mobile** (React Native + Expo). A **API REST é um projeto separado** (`Ford-api`) com deploy independente. O app apenas **consome** essa API.
+
+---
+
+## 👥 Equipe
 
 | Nome | RM |
 |---|---|
@@ -23,280 +20,467 @@ atributo aparece com o **valor** e a **fonte** de onde a informação foi extra�
 
 ---
 
-## 1. Stack
+## 🛠️ Stack Tecnológico
 
 | Camada | Tecnologia |
 |---|---|
-| Runtime | React Native 0.81 + Expo SDK 54 |
-| Linguagem | TypeScript 5.9 (strict) |
-| Navegação | React Navigation (Native Stack + Bottom Tabs) |
-| Estado | React Context (Auth + QueryDraft) |
-| HTTP | axios com interceptor de JWT + refresh automático |
-| Storage seguro | expo-secure-store (tokens JWT) |
-| Cache local | @react-native-async-storage/async-storage (histórico de consultas) |
-| Notificações locais | expo-notifications |
-| Config de ambiente | arquivo `.env` (variáveis `EXPO_PUBLIC_*`) |
+| **Runtime** | React Native 0.81 + Expo SDK 54 |
+| **Linguagem** | TypeScript 5.9 (strict mode) |
+| **Navegação** | React Navigation (Native Stack + Bottom Tabs) |
+| **Estado** | React Context (Auth + QueryDraft) |
+| **HTTP** | axios com interceptor de JWT + refresh automático |
+| **Storage seguro** | expo-secure-store (tokens JWT) |
+| **Cache local** | @react-native-async-storage/async-storage (histórico) |
+| **Notificações** | expo-notifications |
+| **Configuração** | Variáveis de ambiente (`.env`) |
 
 ---
 
-## 2. Telas implementadas
+## 📱 Telas Implementadas
 
-| Tela | Arquivo | Demanda atendida |
+| Tela | Função | Arquivo |
 |---|---|---|
-| Login | `src/screens/auth/LoginScreen.tsx` | Autenticação |
-| Registro | `src/screens/auth/RegisterScreen.tsx` | Onboarding |
-| Início | `src/screens/home/HomeScreen.tsx` | Tela inicial + consultas recentes |
-| Veículo | `src/screens/query/VehicleFormScreen.tsx` | Formulário marca/modelo/versão |
-| Atributos | `src/screens/query/AttributeSelectorScreen.tsx` | Seletor de atributos |
-| Processando | `src/screens/query/ProcessingScreen.tsx` | Estado da extração |
-| Ficha técnica | `src/screens/query/SpecSheetScreen.tsx` | Ficha final (valor + fonte) |
-| Histórico | `src/screens/history/HistoryListScreen.tsx` | Consultas anteriores (cache offline) |
-| Detalhes do histórico | `src/navigation/HistoryStack.tsx` | Reabrir uma ficha salva |
-| Comparação — seleção | `src/screens/compare/CompareSelectionScreen.tsx` | Multi-seleção (2-4 consultas) |
-| Comparação — resultado | `src/screens/compare/CompareResultScreen.tsx` | Placar comparativo |
-| Perfil | `src/screens/profile/ProfileScreen.tsx` | Sessão + permissões |
+| **Login** | Autenticação de usuário | `src/screens/auth/LoginScreen.tsx` |
+| **Registro** | Onboarding de novos usuários | `src/screens/auth/RegisterScreen.tsx` |
+| **Início** | Dashboard com consultas recentes | `src/screens/home/HomeScreen.tsx` |
+| **Veículo** | Seleção de marca/modelo/versão | `src/screens/query/VehicleFormScreen.tsx` |
+| **Atributos** | Seletor de quais dados extrair | `src/screens/query/AttributeSelectorScreen.tsx` |
+| **Processando** | Status da extração em tempo real | `src/screens/query/ProcessingScreen.tsx` |
+| **Ficha Técnica** | Resultado final (valor + fonte) | `src/screens/query/SpecSheetScreen.tsx` |
+| **Histórico** | Consultas salvas localmente | `src/screens/history/HistoryListScreen.tsx` |
+| **Comparação** | Multi-seleção e placar comparativo | `src/screens/compare/CompareSelectionScreen.tsx` e `CompareResultScreen.tsx` |
+| **Perfil** | Sessão + permissões | `src/screens/profile/ProfileScreen.tsx` |
 
 ---
 
-## 3. Ficha técnica — valor + fonte
+## 📋 Ficha Técnica — Valor + Fonte
 
-Cada atributo retornado pela API vem com `value`, `available`, `normalized_unit`
-e `source_hint`. A ficha técnica mostra **somente atributos que vieram com dado
-real** — atributos sem informação não são exibidos.
+Cada atributo retornado pela API vem com:
+- `value` — valor numérico ou textual
+- `available` — disponibilidade
+- `normalized_unit` — unidade padrão
+- `source_hint` — origem da informação
 
-Cada card de atributo apresenta:
-- **Valor** (com unidade normalizada, quando houver)
-- **Fonte** — de onde a informação foi extraída (`source_hint`)
+**Na ficha técnica:**
+- ✅ Apenas atributos com dados reais são exibidos
+- 📍 Cada card mostra **valor** + **fonte** de extração
+- 📊 Atributos numéricos são comparáveis
 
 ---
 
-## 4. Setup
+## ⚡ Quick Start
 
 ### Pré-requisitos
 
-- **Node 20+** (recomendado: 22 LTS) e npm
-- **Expo Go** instalado no celular (Play Store / App Store) **ou** um emulador
+- **Node 20+** (recomendado: 22 LTS)
+- **npm** ou **yarn**
+- **Expo Go** instalado no celular **OU** emulador configurado
 
-### Instalação
+### Instalação (5 minutos)
 
 ```bash
+# Clone e instale
+git clone <repo-url>
 cd ford-mobile-app
 npm install
+
+# Configure as variáveis de ambiente
 cp .env.example .env
 ```
 
-Depois, escolha um dos dois modos de execução na **seção 5**.
+Escolha um dos dois modos na próxima seção.
 
 ---
 
-## 5. Como rodar — escolha o modo
+## 🚀 Como Rodar — Escolha Seu Modo
 
-O app roda de **duas formas**, controladas pela variável `EXPO_PUBLIC_MOCK_MODE`
-no arquivo `.env`. Escolha conforme o que você quer testar:
+O app tem **duas formas de execução**, controladas por `EXPO_PUBLIC_MOCK_MODE` no `.env`:
 
-### 🟢 Modo Demo — sem backend (mais simples)
+### 🟢 MODO DEMO — Sem Backend (Recomendado para começar)
 
-Use para avaliar o app **sem depender da API**. Dados locais (fixtures de 4
-Fords), funciona 100% offline.
+**Ideal para:** avaliar o app **sem depender da API**. Dados locais, **100% offline**.
 
-**1.** No arquivo `.env`, deixe:
-```
+#### Passo 1: Configurar `.env`
+```env
 EXPO_PUBLIC_MOCK_MODE=true
 ```
 
-**2.** Inicie o app:
+#### Passo 2: Iniciar
 ```bash
 npx expo start --clear
 ```
 
-**3.** Abra no Expo Go (QR code) ou no navegador (`w`).
+#### Passo 3: Abrir
+- **Celular:** escaneie o QR code no Expo Go
+- **Web:** pressione `w` no terminal
+- **Android:** pressione `a`
+- **iOS:** pressione `i`
 
-Pronto. Aparece um badge **"MODO DEMO"** amarelo no topo, **qualquer e-mail/senha
-entra**, e o fluxo completo funciona — ficha técnica, histórico, comparação e
-notificações — tudo com dados simulados.
+#### ✨ O que aparece
+- Badge **"MODO DEMO"** amarelo no topo (indicador visual)
+- **Qualquer e-mail/senha funciona** para login
+- 4 Fords pré-carregados para testar:
+  - Ranger Raptor 2024
+  - Mustang Mach-E 2023
+  - F-150 Lightning 2024
+  - Ecosport Titanium 2023
+- **Fluxo completo funciona:** ficha técnica, histórico, comparação, notificações
 
-### 🔵 Modo Real — consumindo a API
+---
 
-Use para testar a integração de verdade. **Requer o backend `Ford-api` rodando**
-(é um projeto separado, em outro repositório). O gateway da API sobe em
-**HTTPS na porta 8443**, com um certificado autoassinado.
+### 🔵 MODO REAL — Consumindo a API
 
-**1.** Suba o backend. No projeto **`Ford-api`**:
+**Ideal para:** testar integração verdadeira. **Requer o backend `Ford-api` rodando.**
+
+#### Passo 1: Suba o Backend
+
+No repositório **`Ford-api`** (projeto separado):
 ```bash
 docker compose up
 ```
-Aguarde estabilizar (~30s).
 
-**2. Autorize o certificado — passo obrigatório.** Abra numa aba do navegador:
-```
-https://localhost:8443
-```
-Como o certificado é autoassinado, o navegador mostra o aviso *"A sua conexão
-não é privada"*. Clique em **Avançado → Continuar para localhost (não seguro)**.
-Deve responder:
-```
-{"service":"ford-api-gateway","status":"ok","mode":"dev-http"}
-```
-Isso registra uma exceção de segurança no navegador — sem ela, **todas** as
-chamadas do app são bloqueadas (entenda o porquê logo abaixo).
+⏳ Aguarde ~30 segundos até ver `✓ All services started`.
 
-**3.** No arquivo `.env` deste app, deixe:
-```
+#### Passo 2: Autorize o Certificado (⚠️ Obrigatório)
+
+Como o certificado é **autoassinado**, você precisa criar uma exceção no navegador:
+
+1. Abra numa aba do navegador:
+   ```
+   https://localhost:8443
+   ```
+
+2. Você verá o aviso *"Sua conexão não é privada"*
+   - Clique em **Avançado**
+   - Clique em **Continuar para localhost (não seguro)**
+
+3. A página deve responder com:
+   ```json
+   {
+     "service": "ford-api-gateway",
+     "status": "ok",
+     "mode": "dev-http"
+   }
+   ```
+
+✅ **Pronto!** A exceção de segurança foi registrada no navegador.
+
+#### Passo 3: Configurar `.env`
+```env
 EXPO_PUBLIC_MOCK_MODE=false
 EXPO_PUBLIC_API_URL=https://localhost:8443
 ```
 
-**4.** Inicie o app:
+#### Passo 4: Iniciar o App
 ```bash
 npx expo start --clear
 ```
 
-**5.** Abra no navegador (`w`). O badge "MODO DEMO" **não aparece** — o app está
-consumindo a API real. Registre uma conta e faça uma consulta.
+#### Passo 5: Abrir no Navegador
+```
+Pressione "w" no terminal
+```
 
-> **Importante:** sempre que mudar o `.env`, reinicie o Metro com `--clear`.
-> As variáveis `EXPO_PUBLIC_*` são embutidas no bundle no momento do build.
+**Verificação:** o badge "MODO DEMO" **não aparece** = app está consumindo a API real ✅
 
-> **Celular físico (Expo Go):** o certificado autoassinado da porta 8443 não é
-> aceito automaticamente no aparelho. Para testar no celular, use o **Modo Demo**
-> ou um backend com certificado válido.
+---
 
-#### Por que preciso autorizar o certificado?
+## ⚠️ Certificados & Erros Comuns
 
-A API é servida por **HTTPS com certificado autoassinado** (gerado localmente,
-não emitido por uma autoridade certificadora). Por padrão, o navegador
-**bloqueia** qualquer requisição a um certificado em que não confia — o app
-falha com `ERR_CERT_AUTHORITY_INVALID` antes mesmo de a requisição sair.
+### Por que preciso autorizar o certificado?
 
-Abrir `https://localhost:8443` e aceitar o aviso cria uma **exceção**: você diz
-ao navegador que confia naquele certificado. A exceção pode cair ao fechar o
-navegador — se o erro voltar, refaça o passo 2.
+A API usa **HTTPS com certificado autoassinado** (gerado localmente, sem autoridade certificadora). O navegador **bloqueia por padrão** — você precisa criar uma exceção.
 
-#### Problemas comuns no Modo Real
+### Problemas e Soluções
 
-| Sintoma | Causa provável | Solução |
+| Erro | Causa | Solução |
 |---|---|---|
-| `ERR_CERT_AUTHORITY_INVALID` | navegador não confia no certificado autoassinado | Abra `https://localhost:8443` e aceite o aviso (passo 2) |
-| `502 Bad Gateway` | nginx com IP defasado de um serviço | No `Ford-api`: `docker compose restart nginx` |
-| `Network Error` no app | backend não respondeu | Confirme com `curl -k https://localhost:8443` |
-| Continua em "MODO DEMO" | Metro não releu o `.env` | Pare o Metro e rode `npx expo start --clear` |
+| `ERR_CERT_AUTHORITY_INVALID` | Navegador não confia no certificado | Abra `https://localhost:8443` e aceite (Passo 2) |
+| `502 Bad Gateway` | Serviço nginx desatualizado | `docker compose restart nginx` no Ford-api |
+| `Network Error` no app | Backend não respondeu | Teste: `curl -k https://localhost:8443` |
+| Continua em "MODO DEMO" | Metro não releu `.env` | Pare o Metro e rode `npx expo start --clear` |
+| `Connection refused` no celular | Rede não alcança localhost:8443 | Use **Modo Demo** ou backend com IP público |
+
+### 📱 Testando no Celular Físico
+
+**⚠️ Atenção:** certificados autoassinados **não funcionam** automaticamente em celulares físicos.
+
+**Opções:**
+1. **Use Modo Demo** ✅ (recomendado)
+2. Use backend com certificado válido
+3. Use IP da máquina + certificado válido
 
 ---
 
-## 6. Configuração — arquivo `.env`
+## 🔧 Arquivo `.env` — Variáveis de Ambiente
 
-O `.env` fica na raiz do projeto e **não vai para o git** (cada máquina tem o
-seu). O que é versionado é o template **`.env.example`**.
+O `.env` fica na **raiz do projeto** e **não é versionado** (cada máquina tem o seu). O template é `.env.example`.
 
-| Variável | Valores | O que faz |
+### Variáveis Disponíveis
+
+| Variável | Valores | Descrição |
 |---|---|---|
-| `EXPO_PUBLIC_MOCK_MODE` | `true` / `false` | `true` = Modo Demo (dados locais); `false` = consome a API real |
-| `EXPO_PUBLIC_API_URL` | `auto`, `https://localhost:8443` ou `http://host:8080` | Endereço da API. `auto` detecta o IP do host por HTTP (porta 8080, modo LAN). Para HTTPS (porta 8443) ou tunnel, fixe o endereço completo |
+| `EXPO_PUBLIC_MOCK_MODE` | `true` / `false` | `true` = Modo Demo (dados locais); `false` = API real |
+| `EXPO_PUBLIC_API_URL` | `auto`, `https://localhost:8443`, `http://IP:8080` | Endereço da API. `auto` detecta IP do host (HTTP porta 8080, modo LAN) |
+
+### Exemplo de `.env`
+
+```env
+# Modo Demo (sem backend)
+EXPO_PUBLIC_MOCK_MODE=true
+EXPO_PUBLIC_API_URL=auto
+
+# OU Modo Real (com backend)
+EXPO_PUBLIC_MOCK_MODE=false
+EXPO_PUBLIC_API_URL=https://localhost:8443
+```
+
+### ⚠️ Lembrete Importante
+
+Sempre que **editar `.env`**, reinicie o Metro:
+```bash
+npx expo start --clear
+```
+
+As variáveis `EXPO_PUBLIC_*` são **embutidas no bundle** no momento do build.
 
 ---
 
-## 7. Fluxo de uso (end-to-end)
+## 📊 Fluxo de Uso (End-to-End)
 
-1. **Login / registro** — no Modo Demo, qualquer credencial entra.
-2. **Início** — mostra as últimas consultas (com cache local para uso offline).
-3. **Nova consulta** — 3 passos:
-   - **Passo 1 — Veículo:** marca, modelo e versão (com presets de Fords).
-   - **Passo 2 — Atributos:** selecione os atributos agrupados (motor, transmissão, conforto, comercial) ou crie um personalizado.
-   - **Passo 3 — Processando:** o app chama a API e monta a ficha.
-4. **Ficha técnica** — lista os atributos encontrados, cada um com valor e fonte.
-5. **Comparação** — escolha 2-4 consultas e veja o placar comparativo (seção 8).
-6. **Notificação local** dispara ao final da extração.
-
----
-
-## 8. Comparação de veículos
-
-A tela de comparação trata o confronto como um **placar de competição**:
-
-- Cada **atributo numérico** (potência, torque, 0-100, preço, autonomia…) tem um
-  **vencedor** — quem tem o melhor valor leva o ponto.
-- Um **placar** no topo soma as vitórias e mostra o ranking com medalhas 🥇🥈🥉.
-- Cada card de atributo destaca o veículo vencedor (🏆) e mostra valor + fonte
-  de cada veículo.
-- Atributos de texto (motor, transmissão) são comparados, mas não têm vencedor.
-
----
-
-## 9. Diferenciais entregues
-
-- ✅ **Modo Demo offline** — app 100% funcional sem backend, com dados locais
-- ✅ **Detecção automática de IP** da API (`EXPO_PUBLIC_API_URL=auto`)
-- ✅ **Histórico local** em AsyncStorage com fallback offline
-- ✅ **Notificação local** ao concluir a extração (`expo-notifications`)
-- ✅ **Refresh automático de JWT** via interceptor do axios
-- ✅ **Atualização ao focar** nas telas Início e Histórico (`useFocusEffect`)
-- ✅ **Comparação** de 2-4 veículos com placar de vitórias e vencedor por atributo
-- ✅ **ErrorBoundary** global — uma exceção de tela não derruba o app
+```
+┌─────────────┐
+│   Login     │ → Qualquer credencial no Modo Demo
+└──────┬──────┘
+       ↓
+┌─────────────────────┐
+│   Tela Inicial      │ → Mostra últimas consultas (com cache offline)
+└──────┬──────────────┘
+       ↓
+┌──────────────────────────────────────┐
+│  Nova Consulta (3 passos)            │
+├──────────────────────────────────────┤
+│  1️⃣  Veículo                         │ → Marca, modelo, versão
+│  2️⃣  Atributos                       │ → Selecione o que extrair
+│  3️⃣  Processando                     │ → API trabalha + UI anima
+└──────┬───────────────────────────────┘
+       ↓
+┌─────────────────────┐
+│  Ficha Técnica      │ → Resultado com valor + fonte
+└──────┬──────────────┘
+       ↓
+┌─────────────────────┐
+│  Notificação Local  │ → "Ficha pronta!" (expo-notifications)
+└──────┬──────────────┘
+       ↓
+┌─────────────────────────────────────┐
+│  Comparação (opcional)              │ → Selecione 2-4 consultas
+│  Placar Comparativo                 │ → Vencedor por atributo
+└─────────────────────────────────────┘
+```
 
 ---
 
-## 10. Estrutura do código
+## 🏆 Comparação de Veículos
+
+A tela de comparação funciona como um **placar de competição**:
+
+- **Cada atributo numérico** (potência, torque, 0-100 km/h, preço, autonomia…) tem um **vencedor** — quem tem o melhor valor leva 1 ponto.
+- **Placar no topo** soma as vitórias e mostra ranking: 🥇 🥈 🥉
+- **Cada card de atributo** destaca o vencedor (🏆), mostra valor + fonte de todos os veículos.
+- **Atributos de texto** (motor, transmissão) são mostrados mas **não têm vencedor**.
+
+---
+
+## 📦 Estrutura do Projeto
 
 ```
 ford-mobile-app/
-├── App.tsx                 # bootstrap dos providers + ErrorBoundary
-├── app.json                # config do Expo
-├── .env / .env.example     # configuração de ambiente (seção 6)
-├── package.json
-├── tsconfig.json
-├── babel.config.js         # alias @/ → src/
+│
+├── App.tsx                         # Bootstrap + ErrorBoundary global
+├── app.json                        # Configuração do Expo
+├── package.json                    # Dependências
+├── tsconfig.json                   # Config TypeScript
+├── babel.config.js                 # Alias @/ → src/
+├── .env / .env.example             # Variáveis de ambiente
+│
 └── src/
-    ├── api/                # axios, endpoints, mocks e config de ambiente
-    ├── components/         # UI reutilizável + AppErrorBoundary
-    ├── contexts/           # AuthContext + QueryDraftContext
-    ├── navigation/         # navegadores Auth / App / Query / History / Compare
-    ├── notifications/      # wrapper de expo-notifications
-    ├── screens/            # telas (auth, home, query, history, compare, profile)
-    ├── storage/            # SecureStore (tokens) + AsyncStorage (cache)
-    ├── theme/              # cores, espaçamentos, tipografia
-    ├── types/              # tipos da API
-    └── utils/              # helpers de formatação, comparação e responsividade
+    ├── api/                        # 🌐 HTTP Client
+    │   ├── axios.ts                # Instância axios + interceptor JWT
+    │   ├── endpoints.ts            # Funções dos endpoints
+    │   └── mocks.ts                # Dados simulados (Modo Demo)
+    │
+    ├── components/                 # 🎨 Componentes reutilizáveis
+    │   ├── AppErrorBoundary.tsx    # Error boundary global
+    │   └── [outros componentes]
+    │
+    ├── contexts/                   # 🔄 Estado Global
+    │   ├── AuthContext.tsx         # Autenticação
+    │   └── QueryDraftContext.tsx   # Rascunho da consulta
+    │
+    ├── navigation/                 # 🧭 Navegadores
+    │   ├── AuthNavigator.tsx       # Fluxo login/registro
+    │   ├── AppNavigator.tsx        # Fluxo logado (home, history, profile)
+    │   ├── QueryNavigator.tsx      # Fluxo nova consulta
+    │   ├── CompareNavigator.tsx    # Fluxo comparação
+    │   └── RootNavigator.tsx       # Coordena tudo
+    │
+    ├── screens/                    # 📱 Telas
+    │   ├── auth/                   # Login, Registro
+    │   ├── home/                   # Dashboard
+    │   ├── query/                  # Fluxo nova consulta
+    │   ├── history/                # Histórico de consultas
+    │   ├── compare/                # Comparação
+    │   └── profile/                # Perfil do usuário
+    │
+    ├── storage/                    # 💾 Persistência
+    │   ├── SecureStore.ts          # Tokens (seguro)
+    │   └── AsyncStorage.ts         # Cache local (histórico)
+    │
+    ├── notifications/              # 🔔 Notificações
+    │   └── NotificationService.ts  # Wrapper de expo-notifications
+    │
+    ├── theme/                      # 🎨 Design System
+    │   ├── colors.ts               # Paleta de cores
+    │   ├── spacing.ts              # Espaçamentos
+    │   └── typography.ts           # Tipografia
+    │
+    ├── types/                      # 📘 TypeScript
+    │   └── api.ts                  # Tipos das respostas da API
+    │
+    └── utils/                      # 🛠️ Funções Auxiliares
+        ├── format.ts               # Formatação (números, moeda, etc)
+        ├── compare.ts              # Lógica de comparação
+        └── responsive.ts           # Helpers de responsividade
 ```
 
 ---
 
-## 11. Endpoints consumidos
+## 🌐 Endpoints Consumidos
 
-| Método | Path | Tela |
-|---|---|---|
-| POST | `/auth/register` | RegisterScreen |
-| POST | `/auth/login` | LoginScreen |
-| POST | `/auth/refresh` | interceptor (transparente) |
-| GET | `/auth/me` | bootstrap + ProfileScreen |
-| POST | `/vehicles/query` | ProcessingScreen |
-| GET | `/vehicles/queries` | HomeScreen + HistoryListScreen |
-| GET | `/vehicles/queries/{id}` | SpecSheetScreen + HistoryDetail |
+Todos esperam **JWT no header** `Authorization: Bearer <token>` (exceto login/registro).
 
-Todos esperam JWT no header `Authorization: Bearer <token>` (exceto register/login).
-Os tipos das respostas estão em [`src/types/api.ts`](src/types/api.ts).
+| Método | Path | Usado em | Autenticação |
+|---|---|---|---|
+| **POST** | `/auth/register` | RegisterScreen | ❌ Não |
+| **POST** | `/auth/login` | LoginScreen | ❌ Não |
+| **POST** | `/auth/refresh` | Interceptor axios | ✅ Sim (transparente) |
+| **GET** | `/auth/me` | Bootstrap + ProfileScreen | ✅ Sim |
+| **POST** | `/vehicles/query` | ProcessingScreen | ✅ Sim |
+| **GET** | `/vehicles/queries` | HomeScreen, HistoryListScreen | ✅ Sim |
+| **GET** | `/vehicles/queries/{id}` | SpecSheetScreen, HistoryDetail | ✅ Sim |
 
----
-
-## 12. Roteiro de demo (3-4 minutos)
-
-1. **Abre o app** → tela inicial com as últimas consultas
-2. **Nova consulta** → toca no preset "Ranger Raptor · 2024"
-3. **Atributos** → toca em "Todos" para selecionar os atributos
-4. **Processando** → mostra as etapas animadas da extração
-5. **Ficha técnica** → mostra os atributos, cada um com valor e fonte
-6. **Comparação** → seleciona 2-3 consultas e mostra o placar comparativo
-7. **Histórico** → volta na aba e mostra que a consulta ficou salva
+📄 Tipos das respostas em: [`src/types/api.ts`](src/types/api.ts)
 
 ---
 
-## 13. Scripts úteis
+## ✨ Diferenciais Entregues
+
+- ✅ **Modo Demo offline** — app 100% funcional sem backend
+- ✅ **Detecção automática de IP** da API (`EXPO_PUBLIC_API_URL=auto`)
+- ✅ **Histórico local** com AsyncStorage + fallback offline
+- ✅ **Notificações locais** ao concluir extração (expo-notifications)
+- ✅ **Refresh automático de JWT** via interceptor axios
+- ✅ **Atualização em time** nas telas Início e Histórico (`useFocusEffect`)
+- ✅ **Comparação multi-veículo** (2-4) com placar e vencedor por atributo
+- ✅ **ErrorBoundary global** — exceção em uma tela não derruba o app
+- ✅ **Responsividade completa** — funciona em todos os tamanhos de tela
+
+---
+
+## 🎬 Roteiro de Demo (3-4 minutos)
+
+**Cenário:** Rodando em **Modo Demo** (sem backend)
+
+1. ✅ **App inicia** → vê a tela inicial com últimas consultas + badge "MODO DEMO"
+2. ✅ **Nova consulta** → clica em "Nova consulta" ou toca em um preset (ex: "Ranger Raptor 2024")
+3. ✅ **Seleção de atributos** → escolhe "Todos" ou atributos específicos
+4. ✅ **Processando** → vê as etapas animadas da extração
+5. ✅ **Ficha técnica** → mostra atributos com valor e fonte
+6. ✅ **Comparação** → volta na aba "Comparar", seleciona 2-3 consultas, vê placar
+7. ✅ **Histórico** → consulta fica salva e aparece na aba "Histórico"
+
+**Tempo total:** ~3 minutos
+
+---
+
+## 📚 Scripts Úteis
+
+### Development
 
 ```bash
-npm start                  # Expo dev server
-npx expo start --clear     # reinicia limpando o cache (use após editar o .env)
-npx expo start --tunnel    # quando a rede local não coopera
-npm run android            # abre no emulador Android
-npm run ios                # abre no simulador iOS (macOS)
-npm run web                # preview no navegador
-npm run typecheck          # tsc --noEmit
+npm start                    # Inicia Expo dev server
+npx expo start --clear       # Reinicia + limpa cache (após editar .env)
+npx expo start --tunnel      # Quando a rede local não coopera (ngrok tunnel)
 ```
+
+### Emuladores
+
+```bash
+npm run android              # Abre no emulador Android
+npm run ios                  # Abre no simulador iOS (macOS)
+npm run web                  # Preview no navegador (web)
+```
+
+### Build & Verificação
+
+```bash
+npm run typecheck            # Verifica tipos TypeScript (tsc --noEmit)
+npm run lint                 # ESLint (se configurado)
+npm run build                # Produção (eas build, se configurado)
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Metro (dev server) está lento?
+
+```bash
+npx expo start --clear
+```
+
+### Mudei `.env` mas as variáveis não atualizaram?
+
+Reinicie com `--clear`:
+```bash
+npx expo start --clear
+```
+
+### Certificado SSL dá erro mesmo após aceitar?
+
+1. Abra `https://localhost:8443` novamente
+2. Aceite o aviso
+3. Reinicie o app no Expo
+
+### App fica travado na tela de login?
+
+- **Modo Demo:** qualquer email/senha entra
+- **Modo Real:** verifique se o backend está rodando (`docker compose up` no Ford-api)
+
+### Como saber se estou em Modo Demo ou Real?
+
+- **Modo Demo:** badge **amarelo "MODO DEMO"** no topo 🟡
+- **Modo Real:** **sem badge** = consumindo API
+
+---
+
+## 📖 Documentação Adicional
+
+- **[Tipos da API](src/types/api.ts)** — Estrutura das respostas
+- **[Configuração Expo](app.json)** — Metadados do app
+- **[Arquivos de exemplo](.env.example)** — Template de variáveis
+
+---
+
+## 📞 Suporte
+
+**Dúvidas ou problemas?**
+
+1. Verifique a seção **Troubleshooting** acima
+2. Confira se está seguindo o **Passo 2 (Certificado)** no Modo Real
+3. Teste em **Modo Demo** primeiro (mais simples)
+
+---
+
+**Desenvolvido para FIAP — 3ESPY**
